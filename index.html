@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Today Todo</title>
+    <meta name="description" content="A minimal, phone-optimized todo app that enforces daily focus">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="date" id="currentDate"></div>
+            <div class="remaining-time" id="remainingTime"></div>
+        </header>
+        
+        <main class="main">
+            <div class="input-container">
+                <input type="text" id="taskInput" placeholder="Add a task..." autocomplete="off">
+            </div>
+            
+            <ul class="task-list" id="taskList"></ul>
+        </main>
+        
+        <div class="settings-button" id="settingsButton">⚙️</div>
+    </div>
+    
+    <!-- Reset Modal -->
+    <div class="modal" id="resetModal">
+        <div class="modal-content">
+            <h2>Yesterday's Unfinished Tasks</h2>
+            <ul id="yesterdayTasks"></ul>
+            <button id="clearAndStart" class="clear-button">Clear & Start Today</button>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2>Settings</h2>
+            <div class="setting-item">
+                <label for="resetTime">Daily Reset Time:</label>
+                <input type="time" id="resetTime" value="04:00">
+            </div>
+            <button id="closeSettings" class="close-button">Close</button>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="sw.js"></script>
+</body>
+</html>
