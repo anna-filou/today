@@ -1,11 +1,10 @@
 const CACHE_NAME = 'today-todo-v1';
-const VERSION = '1.0.10'; // Add version for update detection
 const urlsToCache = [
     '/',
-    '/index.html?v=' + VERSION,
-    '/styles.css?v=' + VERSION,
-    '/app.js?v=' + VERSION,
-    '/manifest.json?v=' + VERSION,
+    '/index.html',
+    '/styles.css',
+    '/app.js',
+    '/manifest.json',
     '/icon-192x192.png',
     '/icon-512x512.png'
 ];
@@ -95,10 +94,5 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
-    }
-    
-    if (event.data && event.data.type === 'CHECK_UPDATE') {
-        // Check if there's a new version available
-        event.ports[0].postMessage({ type: 'UPDATE_AVAILABLE', version: VERSION });
     }
 });
