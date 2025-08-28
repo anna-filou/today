@@ -82,6 +82,7 @@ body {
     display: flex;
     flex-direction: column;
     padding-bottom: 100px; /* Space for fixed input container */
+    min-height: 0; /* Allow flex item to shrink */
 }
 
 .input-container {
@@ -107,6 +108,11 @@ body {
     color: #ffffff;
     outline: none;
     transition: border-color 0.2s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* Prevent zoom on iOS */
+    font-size: 16px;
 }
 
 #taskInput:focus {
@@ -120,6 +126,11 @@ body {
 .task-list {
     list-style: none;
     flex: 1;
+    overflow-y: auto; /* Only scroll when content overflows */
+    min-height: 0; /* Allow flex item to shrink */
+    /* Ensure the list doesn't take up unnecessary space when empty */
+    display: flex;
+    flex-direction: column;
 }
 
 .task-item {
@@ -128,6 +139,7 @@ body {
     padding: 16px 0;
     border-bottom: 1px solid #222;
     animation: slideIn 0.3s ease;
+    flex-shrink: 0; /* Prevent items from shrinking */
 }
 
 @keyframes slideIn {

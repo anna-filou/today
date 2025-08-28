@@ -104,6 +104,25 @@ class TodayTodo {
     setupEventListeners() {
         // Task input
         const taskInput = document.getElementById('taskInput');
+        
+        // Prevent soft keyboard from appearing on focus until user starts typing
+        let hasUserInteracted = false;
+        
+        taskInput.addEventListener('focus', (e) => {
+            // Only show keyboard if user has already interacted
+            if ('ontouchstart' in window && !hasUserInteracted) {
+                e.target.blur();
+            }
+        });
+        
+        taskInput.addEventListener('touchstart', () => {
+            hasUserInteracted = true;
+        });
+        
+        taskInput.addEventListener('input', () => {
+            hasUserInteracted = true;
+        });
+        
         taskInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && taskInput.value.trim()) {
                 this.addTask(taskInput.value.trim());
