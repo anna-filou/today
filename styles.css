@@ -82,6 +82,7 @@ body {
     display: flex;
     flex-direction: column;
     padding-bottom: 100px; /* Space for fixed input container */
+    min-height: 0; /* Allow flex item to shrink */
 }
 
 .input-container {
@@ -95,6 +96,9 @@ body {
     z-index: 10;
     max-width: 600px;
     margin: 0 auto;
+    /* Prevent viewport issues on mobile */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 #taskInput {
@@ -107,6 +111,10 @@ body {
     color: #ffffff;
     outline: none;
     transition: border-color 0.2s ease;
+    /* Mobile keyboard improvements */
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 12px;
 }
 
 #taskInput:focus {
@@ -120,6 +128,8 @@ body {
 .task-list {
     list-style: none;
     flex: 1;
+    overflow-y: auto;
+    min-height: 0; /* Allow flex item to shrink */
 }
 
 .task-item {
@@ -339,15 +349,28 @@ body {
         padding: 20px;
         margin: 10px;
     }
+    
+    /* Better mobile keyboard handling */
+    .app {
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile */
+    }
+    
+    #taskInput {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
 }
 
 /* PWA specific styles */
 @media (display-mode: standalone) {
     .app {
         padding-top: env(safe-area-inset-top);
+        height: 100vh;
+        height: 100dvh;
     }
     
     .input-container {
         padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        bottom: env(safe-area-inset-bottom);
     }
 }

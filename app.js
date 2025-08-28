@@ -105,6 +105,19 @@ class TodayTodo {
             }
         });
         
+        // Better mobile keyboard handling
+        taskInput.addEventListener('focus', () => {
+            // Ensure the input is visible when keyboard appears
+            setTimeout(() => {
+                taskInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        });
+        
+        // Prevent zoom on iOS when focusing input
+        taskInput.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
         // Reset modal
         document.getElementById('clearAndStart').addEventListener('click', () => {
             this.clearAndStartToday();
