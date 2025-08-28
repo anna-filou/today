@@ -271,12 +271,13 @@ class TodayTodo {
             const minutes = totalMinutes % 60;
             
             if (hours > 0) {
-                remainingTimeElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')} left`;
+                remainingTimeElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
             } else {
-                remainingTimeElement.textContent = `${minutes} left`;
+                remainingTimeElement.textContent = `0:${minutes.toString().padStart(2, '0')}`;
             }
+            remainingTimeElement.style.display = 'block';
         } else {
-            remainingTimeElement.textContent = 'No time estimates';
+            remainingTimeElement.style.display = 'none';
         }
     }
     
