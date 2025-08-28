@@ -156,29 +156,34 @@ class TodayTodo {
     }
     
     extractDuration(text) {
-        const durationRegex = /(\d+)\s*(h|hour|hours|hr|hrs|m|min|minute|minutes)\s*(\d+)\s*(m|min|minute|minutes)?/i;
-        const match = text.match(durationRegex);
+        // Match patterns like: "10min", "5 min", "2h", "1 hour", "1h 30m", "1 hour 30 minutes", etc.
+        const durationRegex = /\b(\d+)\s*(h|hour|hours|hr|hrs|m|min|minute|minutes)\b(?:\s*(\d+)\s*(m|min|minute|minutes)\b)?/gi;
+        let totalMinutes = 0;
+        let match;
         
-        if (match) {
-            let totalMinutes = 0;
+        while ((match = durationRegex.exec(text)) !== null) {
+            const value = parseInt(match[1]);
+            const unit = match[2].toLowerCase();
             
-            if (match[2].toLowerCase().startsWith('h')) {
-                totalMinutes += parseInt(match[1]) * 60;
-                if (match[3] && match[4] && match[4].toLowerCase().startsWith('m')) {
-                    totalMinutes += parseInt(match[3]);
-                }
-            } else if (match[2].toLowerCase().startsWith('m')) {
-                totalMinutes += parseInt(match[1]);
+            if (unit.startsWith('h')) {
+                totalMinutes += value * 60;
+            } else if (unit.startsWith('m')) {
+                totalMinutes += value;
             }
             
-            return totalMinutes;
+            // Handle additional minutes (e.g., "1h 30m")
+            if (match[3] && match[4]) {
+                const additionalMinutes = parseInt(match[3]);
+                totalMinutes += additionalMinutes;
+            }
         }
         
-        return null;
+        return totalMinutes > 0 ? totalMinutes : null;
     }
     
     removeDurationFromText(text) {
-        return text.replace(/\d+\s*(h|hour|hours|hr|hrs|m|min|minute|minutes)\s*(\d+)\s*(m|min|minute|minutes)?/gi, '').trim();
+        // Remove duration patterns from text, keeping the same regex as extractDuration
+        return text.replace(/\b(\d+)\s*(h|hour|hours|hr|hrs|m|min|minute|minutes)\b(?:\s*(\d+)\s*(m|min|minute|minutes)\b)?/gi, '').trim();
     }
     
     formatDuration(minutes) {
