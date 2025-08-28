@@ -110,6 +110,11 @@ class TodayTodo {
             this.clearAndStartToday();
         });
         
+        // Settings
+        document.getElementById('settingsButton').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.add('show');
+        });
+        
         // Header settings
         document.getElementById('headerSettingsButton').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.add('show');

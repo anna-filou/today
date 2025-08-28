@@ -36,8 +36,7 @@ body {
 
 .header-content {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     max-width: 600px;
     margin: 0 auto;
@@ -46,14 +45,7 @@ body {
 .date {
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 8px;
-}
-
-.header-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
+    flex: 1;
 }
 
 .remaining-time {
@@ -61,6 +53,7 @@ body {
     color: #888;
     font-weight: 500;
     flex: 1;
+    text-align: center;
 }
 
 .header-settings {
@@ -81,20 +74,10 @@ body {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    padding-bottom: 100px; /* Space for fixed input container */
 }
 
 .input-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: #000000;
-    padding: 20px;
-    border-top: 1px solid #333;
-    z-index: 10;
-    max-width: 600px;
-    margin: 0 auto;
+    margin-bottom: 30px;
 }
 
 #taskInput {
@@ -205,7 +188,28 @@ body {
     color: #ff4444;
 }
 
+.settings-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 100;
+}
 
+.settings-button:hover {
+    background-color: #222;
+    border-color: #666;
+}
 
 .modal {
     display: none;
@@ -328,11 +332,14 @@ body {
     
     .main {
         padding: 15px;
-        padding-bottom: 100px;
     }
     
-    .input-container {
-        padding: 15px;
+    .settings-button {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
     }
     
     .modal-content {
@@ -345,9 +352,6 @@ body {
 @media (display-mode: standalone) {
     .app {
         padding-top: env(safe-area-inset-top);
-    }
-    
-    .input-container {
-        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        padding-bottom: env(safe-area-inset-bottom);
     }
 }
