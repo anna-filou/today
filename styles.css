@@ -320,6 +320,37 @@ body {
     border-bottom: none;
 }
 
+/* Floating Next Day Button */
+.floating-next-day-btn {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #333;
+    border: 2px solid #666;
+    color: #ffffff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-next-day-btn:hover {
+    background-color: #444;
+    border-color: #888;
+    transform: scale(1.05);
+}
+
+.floating-next-day-btn:active {
+    transform: scale(0.95);
+}
+
 /* Responsive design */
 @media (max-width: 480px) {
     .header {
@@ -338,6 +369,14 @@ body {
     .modal-content {
         padding: 20px;
         margin: 10px;
+    }
+    
+    .floating-next-day-btn {
+        bottom: 90px;
+        right: 15px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
     }
 }
 
