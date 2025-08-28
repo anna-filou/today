@@ -60,7 +60,7 @@ function updateVersion(newVersion) {
     ];
 
     // Current version (you can change this as needed)
-    const currentVersion = '1.0.0';
+    const currentVersion = '1.0.10';
 
     let updatedCount = 0;
 

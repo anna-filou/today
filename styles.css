@@ -17,7 +17,7 @@ body {
 }
 
 .app {
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     max-width: 600px;
@@ -82,6 +82,7 @@ body {
     flex-direction: column;
     padding-bottom: 100px; /* Space for fixed input container */
     min-height: 0; /* Allow flex item to shrink */
+    overflow: hidden; /* Prevent overflow */
 }
 
 .input-container {
@@ -130,6 +131,7 @@ body {
     /* Ensure the list doesn't take up unnecessary space when empty */
     display: flex;
     flex-direction: column;
+    max-height: calc(100vh - 120px - 100px); /* viewport height - header height - input container height */
 }
 
 .task-item {
