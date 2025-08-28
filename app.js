@@ -115,6 +115,11 @@ class TodayTodo {
             document.getElementById('settingsModal').classList.add('show');
         });
         
+        // Header settings
+        document.getElementById('headerSettingsButton').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.add('show');
+        });
+        
         document.getElementById('closeSettings').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.remove('show');
         });
@@ -240,10 +245,9 @@ class TodayTodo {
         const dateElement = document.getElementById('currentDate');
         const today = new Date();
         const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric'
         };
         dateElement.textContent = today.toLocaleDateString('en-US', options);
     }
@@ -260,12 +264,10 @@ class TodayTodo {
             const hours = Math.floor(totalMinutes / 60);
             const minutes = totalMinutes % 60;
             
-            if (hours > 0 && minutes > 0) {
-                remainingTimeElement.textContent = `${hours}h ${minutes}m remaining`;
-            } else if (hours > 0) {
-                remainingTimeElement.textContent = `${hours}h remaining`;
+            if (hours > 0) {
+                remainingTimeElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')} left`;
             } else {
-                remainingTimeElement.textContent = `${minutes}m remaining`;
+                remainingTimeElement.textContent = `${minutes} left`;
             }
         } else {
             remainingTimeElement.textContent = 'No time estimates';
