@@ -2,6 +2,7 @@
     "name": "Today Todo",
     "short_name": "Today Todo",
     "description": "A minimal, phone-optimized todo app that enforces daily focus",
+    "version": "1.0.10",
     "start_url": "/today/",
     "display": "standalone",
     "background_color": "#000000",
