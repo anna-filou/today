@@ -88,6 +88,12 @@ class TodayTodo {
         }
     }
     
+    simulateNextDay() {
+        // Simulate the next day by showing the reset modal
+        // This will display any unfinished tasks as if it's the next day
+        this.showResetModal();
+    }
+    
     clearAndStartToday() {
         this.tasks = [];
         this.saveData();
@@ -117,6 +123,11 @@ class TodayTodo {
         
         document.getElementById('closeSettings').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.remove('show');
+        });
+        
+        // Next day simulation button
+        document.getElementById('nextDayBtn').addEventListener('click', () => {
+            this.simulateNextDay();
         });
         
         // Settings input
