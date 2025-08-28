@@ -321,11 +321,73 @@ class TodayTodo {
             navigator.serviceWorker.register('sw.js')
                 .then(registration => {
                     console.log('ServiceWorker registration successful');
+                    
+                    // Check for updates on page load
+                    this.checkForUpdates(registration);
+                    
+                    // Listen for service worker updates
+                    registration.addEventListener('updatefound', () => {
+                        console.log('Service Worker update found');
+                        const newWorker = registration.installing;
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                this.showUpdateNotification();
+                            }
+                        });
+                    });
+                    
+                    // Listen for controller change (when new service worker takes over)
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.log('New service worker activated');
+                        // Reload the page to get the latest version
+                        window.location.reload();
+                    });
                 })
                 .catch(error => {
                     console.log('ServiceWorker registration failed:', error);
                 });
         }
+    }
+    
+    checkForUpdates(registration) {
+        // Check for updates every time the page loads
+        registration.update();
+        
+        // Also check periodically (every 5 minutes)
+        setInterval(() => {
+            registration.update();
+        }, 5 * 60 * 1000);
+    }
+    
+    showUpdateNotification() {
+        // Create update notification
+        const notification = document.createElement('div');
+        notification.className = 'update-notification';
+        notification.innerHTML = `
+            <div class="update-content">
+                <span>🔄 New version available!</span>
+                <button id="updateBtn" class="update-btn">Update Now</button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Add click handler for update button
+        document.getElementById('updateBtn').addEventListener('click', () => {
+            // Send message to service worker to skip waiting
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+            }
+            notification.remove();
+        });
+        
+        // Auto-remove notification after 10 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 10000);
     }
 }
 
