@@ -1,5 +1,5 @@
 const CACHE_NAME = 'today-todo-v1';
-const VERSION = '1.0.0'; // Add version for update detection
+const VERSION = '1.0.10'; // Add version for update detection
 const urlsToCache = [
     '/',
     '/index.html?v=' + VERSION,
