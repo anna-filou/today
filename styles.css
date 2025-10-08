@@ -17,7 +17,8 @@ body {
 }
 
 .app {
-    height: 100vh;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Dynamic viewport height - adjusts for URL bar on mobile */
     display: flex;
     flex-direction: column;
     max-width: 600px;
@@ -172,7 +173,9 @@ body {
     flex: 1;
     overflow-y: auto; /* Only scroll when content overflows */
     min-height: 0; /* Allow flex item to shrink */
-    padding-bottom: 150px; /* ensure last item clears bottom nav */
+    padding-bottom: calc(120px + env(safe-area-inset-bottom)); /* ensure last item clears bottom nav gradient */
+    /* Prevent scrolling when content fits */
+    overscroll-behavior: contain;
 }
 
 .task-item {

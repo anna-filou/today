@@ -21,11 +21,13 @@ A minimal, phone-optimized todo app that enforces daily focus by resetting each 
 - Duration text appears in darker color within task names
 
 **🔄 Daily Reset Philosophy:**
-- When you open the app on a new day, it shows yesterday's unfinished tasks in a modal
-- Only option is "Clear & start today" - no carrying over old tasks
-- Forces you to consciously re-add what's truly important today
-- Customizable reset time in settings (perfect for night owls)
+- Automatic reset at customizable time (default 4 AM, configurable in settings)
+- Modal automatically appears when reset time is reached (checks every minute)
+- Shows yesterday's unfinished tasks in a non-dismissible modal
+- Only option is "Clear & start today" - modal cannot be dismissed by clicking outside
+- No carrying over old tasks - forces you to consciously re-add what's truly important
 - Custom 24-hour time picker works across all devices and platforms
+- Perfect for night owls who want their "new day" to start at a different time
 
 **📱 Design:**
 - Clean black interface optimized for phones
@@ -85,6 +87,10 @@ When you make changes to the code, you **must** update the version number in 3 p
 
 ### Custom CSS Implementations
 - **Dashed Borders**: Uses `repeating-linear-gradient` backgrounds for precise control over dash/gap spacing (2px dash + 5px gap)
+- **Dynamic Viewport Height**: Uses `100dvh` instead of `100vh` for proper mobile browser support
+  - **Why**: Chrome's URL bar causes `100vh` to include hidden space, creating unnecessary scrolling
+  - **Solution**: `100dvh` dynamically adjusts based on URL bar visibility
+  - **Result**: Task list only scrolls when content truly overflows, not because of viewport miscalculation
 
 ### Toast Notifications
 - **User Feedback**: Small notifications appear above bottom navigation for task actions and sort mode changes
@@ -94,13 +100,30 @@ When you make changes to the code, you **must** update the version number in 3 p
 ### Mobile Browser Compatibility
 
 #### Chrome Android - Keyboard Issues
-- **Software Keyboard Covers Input**: On Chrome Android, when the add/edit task overlay appears, the software keyboard covers the input field instead of positioning above it. Works correctly in other browsers (Kiwi Browser, Safari, Firefox).
-  - **Status**: Unresolved
-  - **Attempted Fixes**: `position: fixed`, `height: 100dvh`, body overflow controls
-  - **Impact**: Major UX issue - input is hidden behind keyboard, making it hard to see what you're typing
+- **Software Keyboard Covers Input**: ~~On Chrome Android, when the add/edit task overlay appears, the software keyboard covers the input field instead of positioning above it.~~
+  - **Status**: ✅ **Resolved** using Visual Viewport API (input now stays visible)
+  - **Solution**: 
+    - Uses `window.visualViewport` to detect keyboard height changes
+    - Delays focus by 2 animation frames to avoid race condition with keyboard transition
+    - Listens to viewport `resize`/`scroll` events to keep input centered when keyboard opens
+    - Calls `focus({ preventScroll: true })` then manually scrolls input into view
+  - **Why it works**: Chrome's keyboard opening is async; waiting for transition frames prevents focusing with stale geometry. Visual Viewport API provides real-time keyboard height, allowing proper repositioning.
+  - **Impact**: Input stays visible, but see note below about overlay behavior
+
+- **Overlay Scrolls Page Content (Chrome Android)**: When the keyboard appears, Chrome Android pushes the page content upwards instead of treating the overlay as a true fixed overlay. Works correctly in Kiwi Browser (content stays in place behind overlay).
+  - **Status**: Open for investigation
+  - **Current Behavior**: Visual Viewport API ensures input stays visible, but page content beneath the overlay shifts when keyboard opens
+  - **Ideal Behavior**: Overlay should remain truly fixed with page content stationary behind it
+  - **Impact**: Non-breaking - input is functional, but visual behavior differs from other browsers
 
 - **Keyboard Autocomplete Bar**: Chrome Android shows a QuickType/autofill bar above the keyboard with irrelevant suggestions (passwords, addresses, credit cards) even though the input is `type="text"` for task names.
-  - **Status**: Unresolved
-  - **Attempted Fix**: `autocomplete="off"` attribute added but Chrome completely ignores it
-  - **Chrome Behavior**: Uses "smart" detection to decide when to show autofill, overriding developer preferences
-  - **Impact**: Moderate UX issue - takes up screen space and shows irrelevant suggestions, confusing users
+  - **Status**: ❌ **Unresolved** - Chrome completely ignores all mitigation attempts
+  - **Attempted Fixes** (all ineffective):
+    - `autocomplete="off"` - ignored
+    - `aria-autocomplete="none"` - ignored
+    - `inputmode="text"` - ignored
+    - `autocapitalize="sentences"` - ignored
+    - `name="taskNameField"` (generic, non-PII) - ignored
+  - **Chrome Behavior**: Completely disregards developer preferences and HTML standards; uses its own "smart" heuristics to force autofill suggestions regardless of explicit opt-out attributes
+  - **Root Cause**: Chrome/Android IME has final control over autofill bar display; no HTML/CSS/JS solution exists without breaking accessibility
+  - **Impact**: Moderate UX issue - wastes screen space with irrelevant password/credit card suggestions on a task name field; cannot be suppressed without contenteditable workarounds that would break accessibility

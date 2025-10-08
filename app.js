@@ -17,6 +17,11 @@ class TodayTodo {
         this.setupEventListeners();
         this.updateUI();
         this.registerServiceWorker();
+        
+        // Check for daily reset every minute
+        setInterval(() => {
+            this.checkDailyReset();
+        }, 60000); // 60000ms = 1 minute
     }
     
     loadData() {
@@ -46,31 +51,38 @@ class TodayTodo {
     }
     
     checkDailyReset() {
-        const today = new Date();
-        const todayString = today.toDateString();
+        const now = new Date();
         
-        if (this.lastVisitDate) {
-            const lastVisitString = this.lastVisitDate.toDateString();
-            
-            if (todayString !== lastVisitString) {
-                // Check if we've passed the reset time
-                const resetTime = this.settings.resetTime.split(':');
-                const resetHour = parseInt(resetTime[0]);
-                const resetMinute = parseInt(resetTime[1]);
-                
-                const resetTimeToday = new Date(today);
-                resetTimeToday.setHours(resetHour, resetMinute, 0, 0);
-                
-                const lastVisitTime = new Date(this.lastVisitDate);
-                lastVisitTime.setHours(resetHour, resetMinute, 0, 0);
-                
-                if (today > resetTimeToday && this.lastVisitDate < resetTimeToday) {
-                    this.showResetModal();
-                }
-            }
+        if (!this.lastVisitDate) {
+            // First visit ever, just save the current time
+            this.lastVisitDate = now;
+            this.saveData();
+            return;
         }
         
-        this.lastVisitDate = today;
+        // Parse reset time from settings
+        const resetTime = this.settings.resetTime.split(':');
+        const resetHour = parseInt(resetTime[0]);
+        const resetMinute = parseInt(resetTime[1]);
+        
+        // Calculate the most recent reset time
+        // This is the reset time for today, or yesterday if we haven't reached it yet today
+        const todayReset = new Date(now);
+        todayReset.setHours(resetHour, resetMinute, 0, 0);
+        
+        // If current time is before today's reset time, the last reset was yesterday
+        const lastReset = now < todayReset 
+            ? new Date(todayReset.getTime() - 24 * 60 * 60 * 1000) // Yesterday's reset
+            : todayReset; // Today's reset
+        
+        // Check if we've crossed a reset boundary since last visit
+        if (this.lastVisitDate < lastReset && now >= lastReset) {
+            this.showResetModal();
+        }
+        
+        // Update last visit time
+        this.lastVisitDate = now;
+        this.saveData();
     }
     
     showResetModal() {
@@ -299,9 +311,14 @@ class TodayTodo {
         // Initialize time picker
         this.initializeTimePicker();
         
-        // Close modals when clicking outside
+        // Close modals when clicking outside (except newDayModal - it's mandatory)
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
+                // Don't allow dismissing the new day modal - user must click the button
+                if (modal.id === 'newDayModal') {
+                    return;
+                }
+                
                 if (e.target === modal) {
                     modal.classList.remove('show');
                 }
@@ -438,14 +455,22 @@ class TodayTodo {
         // Pre-populate input with current task text
         input.value = task.text || '';
         
+        // Prevent body scroll when overlay is open - Chrome-specific fixes
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        
         overlay.classList.add('show');
         
-        // Focus input after a short delay to ensure overlay is visible
-        setTimeout(() => {
-            input.focus();
-            // Place cursor at the end of the text
-            input.setSelectionRange(input.value.length, input.value.length);
-        }, 100);
+        // Use Visual Viewport API to handle keyboard properly on mobile
+        this.setupKeyboardAwareFocus(input);
+        
+        // Place cursor at the end after focusing
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                input.setSelectionRange(input.value.length, input.value.length);
+            });
+        });
     }
     
     
@@ -567,10 +592,48 @@ class TodayTodo {
         
         overlay.classList.add('show');
         
-        // Focus input after a short delay to ensure overlay is visible
-        setTimeout(() => {
-            input.focus();
-        }, 100);
+        // Use Visual Viewport API to handle keyboard properly on mobile
+        this.setupKeyboardAwareFocus(input);
+    }
+    
+    setupKeyboardAwareFocus(element) {
+        const ensureIntoView = () => {
+            const vv = window.visualViewport;
+            if (!vv) return;
+            
+            const rect = element.getBoundingClientRect();
+            const visibleTop = vv.offsetTop;
+            const visibleBottom = vv.offsetTop + vv.height;
+            
+            if (rect.top < visibleTop || rect.bottom > visibleBottom) {
+                element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+        };
+        
+        const vv = window.visualViewport;
+        if (vv) {
+            // Listen for keyboard changes
+            const onVvChange = () => ensureIntoView();
+            vv.addEventListener('resize', onVvChange);
+            vv.addEventListener('scroll', onVvChange);
+            
+            // Clean up listeners when modal closes
+            const cleanup = () => {
+                vv.removeEventListener('resize', onVvChange);
+                vv.removeEventListener('scroll', onVvChange);
+            };
+            
+            // Store cleanup function for later
+            this.keyboardCleanup = cleanup;
+        }
+        
+        // Wait for keyboard transition frames before focusing
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                element.focus({ preventScroll: true });
+                ensureIntoView();
+            });
+        });
     }
     
     hideAddTaskModal() {
@@ -580,6 +643,12 @@ class TodayTodo {
         overlay.classList.remove('show');
         input.value = '';
         this.currentEditingTaskId = null;
+        
+        // Clean up Visual Viewport listeners
+        if (this.keyboardCleanup) {
+            this.keyboardCleanup();
+            this.keyboardCleanup = null;
+        }
         
         // Restore body scroll - Chrome-specific fixes
         document.body.style.overflow = '';
