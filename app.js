@@ -6,6 +6,7 @@ class TodayTodo {
         };
         this.lastVisitDate = null;
         this.sortMode = 'creation'; // 'creation' or 'duration'
+        this.currentEditingTaskId = null;
         
         this.init();
     }
@@ -159,6 +160,30 @@ class TodayTodo {
         // Add button
         document.getElementById('addBtn').addEventListener('click', () => {
             this.showAddTaskModal();
+        });
+        
+        // Add task overlay events
+        const addTaskInput = document.getElementById('addTaskInput');
+        const addTaskSubmit = document.getElementById('addTaskSubmit');
+        const addTaskOverlay = document.getElementById('addTaskOverlay');
+        
+        // Submit button click
+        addTaskSubmit.addEventListener('click', () => {
+            this.handleTaskSubmit();
+        });
+        
+        // Enter key press
+        addTaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.handleTaskSubmit();
+            }
+        });
+        
+        // Click outside overlay to close
+        addTaskOverlay.addEventListener('click', (e) => {
+            if (e.target === addTaskOverlay) {
+                this.hideAddTaskModal();
+            }
         });
         
         // Sort button - toggle between creation and duration sorting
@@ -361,25 +386,26 @@ class TodayTodo {
     editTask(id) {
         const task = this.tasks.find(t => t.id === id);
         if (task) {
-            const newText = prompt('Edit task:', task.text);
-            if (newText !== null && newText.trim()) {
-                const extractedDuration = this.extractDuration(newText);
-                const cleanText = this.removeDurationFromText(newText.trim());
-                
-                // Always update the text
-                task.text = cleanText;
-                
-                // Only update duration if user explicitly included one in their edit
-                // If they didn't include a duration, preserve the existing one
-                if (extractedDuration > 0) {
-                    task.duration = extractedDuration;
-                }
-                // If extractedDuration is 0, we keep the existing task.duration unchanged
-                
-                this.saveData();
-                this.updateUI();
-            }
+            this.currentEditingTaskId = id;
+            this.showEditTaskModal(task);
         }
+    }
+    
+    showEditTaskModal(task) {
+        const overlay = document.getElementById('addTaskOverlay');
+        const input = document.getElementById('addTaskInput');
+        
+        // Pre-populate input with current task text
+        input.value = task.text || '';
+        
+        overlay.classList.add('show');
+        
+        // Focus input after a short delay to ensure overlay is visible
+        setTimeout(() => {
+            input.focus();
+            // Select all text for easy editing
+            input.select();
+        }, 100);
     }
     
     
@@ -491,9 +517,56 @@ class TodayTodo {
     }
     
     showAddTaskModal() {
-        const taskText = prompt('Add a task:');
-        if (taskText !== null && taskText.trim()) {
-            this.addTask(taskText.trim());
+        const overlay = document.getElementById('addTaskOverlay');
+        const input = document.getElementById('addTaskInput');
+        
+        overlay.classList.add('show');
+        
+        // Focus input after a short delay to ensure overlay is visible
+        setTimeout(() => {
+            input.focus();
+        }, 100);
+    }
+    
+    hideAddTaskModal() {
+        const overlay = document.getElementById('addTaskOverlay');
+        const input = document.getElementById('addTaskInput');
+        
+        overlay.classList.remove('show');
+        input.value = '';
+        this.currentEditingTaskId = null;
+    }
+    
+    handleTaskSubmit() {
+        const input = document.getElementById('addTaskInput');
+        const taskText = input.value.trim();
+        
+        if (!taskText) return;
+        
+        if (this.currentEditingTaskId) {
+            // Editing existing task
+            const task = this.tasks.find(t => t.id === this.currentEditingTaskId);
+            if (task) {
+                const extractedDuration = this.extractDuration(taskText);
+                const cleanText = this.removeDurationFromText(taskText);
+                
+                // Always update the text
+                task.text = cleanText;
+                
+                // Only update duration if user explicitly included one in their edit
+                if (extractedDuration > 0) {
+                    task.duration = extractedDuration;
+                }
+                // If extractedDuration is 0, we keep the existing task.duration unchanged
+                
+                this.saveData();
+                this.updateUI();
+                this.hideAddTaskModal();
+            }
+        } else {
+            // Adding new task
+            this.addTask(taskText);
+            this.hideAddTaskModal();
         }
     }
     
