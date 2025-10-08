@@ -549,11 +549,13 @@ class TodayTodo {
         let currentX = 0;
         let isSwiping = false;
         const swipeThreshold = 100; // pixels to trigger delete
+        const deleteIndicator = element.querySelector('.delete-indicator');
         
         element.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
             isSwiping = true;
             element.classList.add('swiping');
+            deleteIndicator.textContent = 'Swipe to delete';
         });
         
         element.addEventListener('touchmove', (e) => {
@@ -566,6 +568,15 @@ class TodayTodo {
             if (Math.abs(diffX) > 10) {
                 e.preventDefault(); // Prevent scrolling when swiping
                 element.style.transform = `translateX(${diffX}px)`;
+                
+                // Change indicator when threshold is reached
+                if (Math.abs(diffX) > swipeThreshold) {
+                    element.classList.add('delete-threshold');
+                    deleteIndicator.textContent = 'Delete';
+                } else {
+                    element.classList.remove('delete-threshold');
+                    deleteIndicator.textContent = 'Swipe to delete';
+                }
             }
         });
         
@@ -574,6 +585,7 @@ class TodayTodo {
             
             const diffX = currentX - startX;
             element.classList.remove('swiping');
+            element.classList.remove('delete-threshold');
             
             // Check if swipe exceeded threshold (either left or right)
             if (Math.abs(diffX) > swipeThreshold) {
@@ -597,6 +609,7 @@ class TodayTodo {
         
         element.addEventListener('touchcancel', () => {
             element.classList.remove('swiping');
+            element.classList.remove('delete-threshold');
             element.style.transform = 'translateX(0)';
             isSwiping = false;
             startX = 0;
