@@ -167,10 +167,16 @@ class TodayTodo {
         const addTaskSubmit = document.getElementById('addTaskSubmit');
         const addTaskOverlay = document.getElementById('addTaskOverlay');
         
-        // Submit button click
+        // Submit button click (desktop)
         addTaskSubmit.addEventListener('click', () => {
             this.handleTaskSubmit();
         });
+        
+        // Submit button touch (mobile)
+        addTaskSubmit.addEventListener('touchend', (e) => {
+            e.preventDefault(); // Prevent click event from also firing
+            this.handleTaskSubmit();
+        }, { passive: false });
         
         // Enter key press
         addTaskInput.addEventListener('keypress', (e) => {
@@ -179,12 +185,46 @@ class TodayTodo {
             }
         });
         
-        // Click outside overlay to close
+        // Click/touch outside input area to close
         addTaskOverlay.addEventListener('click', (e) => {
-            if (e.target === addTaskOverlay) {
+            // Close if clicking on overlay background or outside the input row
+            if (e.target === addTaskOverlay || !e.target.closest('.add-task-row')) {
                 this.hideAddTaskModal();
             }
         });
+        
+        // Touch events for mobile browsers
+        addTaskOverlay.addEventListener('touchstart', (e) => {
+            // Close if touching overlay background or outside the input row
+            if (e.target === addTaskOverlay || !e.target.closest('.add-task-row')) {
+                e.preventDefault();
+                this.hideAddTaskModal();
+            }
+        }, { passive: false });
+        
+        // Prevent scrolling within the overlay - Chrome-specific fixes
+        addTaskOverlay.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        addTaskOverlay.addEventListener('wheel', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        addTaskOverlay.addEventListener('scroll', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Prevent Chrome's pull-to-refresh and overscroll
+        addTaskOverlay.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        addTaskOverlay.addEventListener('touchend', (e) => {
+            e.preventDefault();
+        }, { passive: false });
         
         // Sort button - toggle between creation and duration sorting
         document.getElementById('sortBtn').addEventListener('click', () => {
@@ -403,8 +443,8 @@ class TodayTodo {
         // Focus input after a short delay to ensure overlay is visible
         setTimeout(() => {
             input.focus();
-            // Select all text for easy editing
-            input.select();
+            // Place cursor at the end of the text
+            input.setSelectionRange(input.value.length, input.value.length);
         }, 100);
     }
     
@@ -520,8 +560,10 @@ class TodayTodo {
         const overlay = document.getElementById('addTaskOverlay');
         const input = document.getElementById('addTaskInput');
         
-        // Prevent body scroll when overlay is open
+        // Prevent body scroll when overlay is open - Chrome-specific fixes
         document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
         
         overlay.classList.add('show');
         
@@ -539,8 +581,10 @@ class TodayTodo {
         input.value = '';
         this.currentEditingTaskId = null;
         
-        // Restore body scroll
+        // Restore body scroll - Chrome-specific fixes
         document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
     }
     
     handleTaskSubmit() {
@@ -653,14 +697,16 @@ class TodayTodo {
         let startX = 0;
         let currentX = 0;
         let isSwiping = false;
+        let hasMovedEnough = false; // Track if user has swiped enough to be considered a swipe
         const swipeThreshold = 100; // pixels to trigger delete
+        const moveThreshold = 15; // minimum movement to be considered a swipe (not a tap)
         const deleteIndicator = element.querySelector('.delete-indicator');
         
         element.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
+            currentX = startX;
             isSwiping = true;
-            element.classList.add('swiping');
-            deleteIndicator.textContent = 'Swipe to delete';
+            hasMovedEnough = false;
         });
         
         element.addEventListener('touchmove', (e) => {
@@ -669,8 +715,11 @@ class TodayTodo {
             currentX = e.touches[0].clientX;
             const diffX = currentX - startX;
             
-            // Only allow left or right swipes (not both directions)
-            if (Math.abs(diffX) > 10) {
+            // Only consider it a swipe if moved more than threshold
+            if (Math.abs(diffX) > moveThreshold) {
+                hasMovedEnough = true;
+                element.classList.add('swiping');
+                deleteIndicator.textContent = 'Swipe to delete';
                 e.preventDefault(); // Prevent scrolling when swiping
                 element.style.transform = `translateX(${diffX}px)`;
                 
@@ -689,11 +738,12 @@ class TodayTodo {
             if (!isSwiping) return;
             
             const diffX = currentX - startX;
+            isSwiping = false;
             element.classList.remove('swiping');
             element.classList.remove('delete-threshold');
             
-            // Check if swipe exceeded threshold (either left or right)
-            if (Math.abs(diffX) > swipeThreshold) {
+            // Only delete if user actually swiped (not just tapped)
+            if (hasMovedEnough && Math.abs(diffX) > swipeThreshold) {
                 // Animate off screen
                 const direction = diffX > 0 ? 1 : -1;
                 element.style.transform = `translateX(${direction * window.innerWidth}px)`;

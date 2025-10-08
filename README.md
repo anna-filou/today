@@ -88,3 +88,19 @@ When you make changes to the code, you **must** update the version number in 3 p
 
 ### Toast Notifications
 - **User Feedback**: Small notifications appear above bottom navigation for task actions and sort mode changes
+
+## Known Issues
+
+### Mobile Browser Compatibility
+
+#### Chrome Android - Keyboard Issues
+- **Software Keyboard Covers Input**: On Chrome Android, when the add/edit task overlay appears, the software keyboard covers the input field instead of positioning above it. Works correctly in other browsers (Kiwi Browser, Safari, Firefox).
+  - **Status**: Unresolved
+  - **Attempted Fixes**: `position: fixed`, `height: 100dvh`, body overflow controls
+  - **Impact**: Major UX issue - input is hidden behind keyboard, making it hard to see what you're typing
+
+- **Keyboard Autocomplete Bar**: Chrome Android shows a QuickType/autofill bar above the keyboard with irrelevant suggestions (passwords, addresses, credit cards) even though the input is `type="text"` for task names.
+  - **Status**: Unresolved
+  - **Attempted Fix**: `autocomplete="off"` attribute added but Chrome completely ignores it
+  - **Chrome Behavior**: Uses "smart" detection to decide when to show autofill, overriding developer preferences
+  - **Impact**: Moderate UX issue - takes up screen space and shows irrelevant suggestions, confusing users
