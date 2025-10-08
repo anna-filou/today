@@ -52,11 +52,12 @@ Only HTML, CSS and JS. PWA. Saves tasks in local storage.
 ## Deployment & Updates
 
 ### Version Update Process
-When you make changes to the code, you **must** update the version number:
+When you make changes to the code, you **must** update the version number in 3 places:
 
 1. **Update `sw.js`**: Change the `VERSION` constant (e.g., `'1.0.11'` → `'1.0.12'`)
 2. **Update `manifest.json`**: Change the `version` field to match
-3. **Commit and Push**: Deploy to your hosting
+3. **Update `index.html`**: Change version in `?v=` query parameters on CSS and JS file links
+4. **Commit and Push**: Deploy to your hosting
 
 ### Why Version Updates Matter
 - **Service Worker Detection**: Changing the `VERSION` in `sw.js` creates a new cache name

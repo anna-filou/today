@@ -3,8 +3,8 @@ const CACHE_NAME = `today-todo-v${VERSION}`;
 const urlsToCache = [
     '/today/',
     '/today/index.html',
-    '/today/styles.css',
-    '/today/app.js',
+    `/today/styles.css?v=${VERSION}`,
+    `/today/app.js?v=${VERSION}`,
     '/today/manifest.json',
     '/today/icon-192x192.png',
     '/today/icon-512x512.png'
