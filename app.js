@@ -520,6 +520,9 @@ class TodayTodo {
         const overlay = document.getElementById('addTaskOverlay');
         const input = document.getElementById('addTaskInput');
         
+        // Prevent body scroll when overlay is open
+        document.body.style.overflow = 'hidden';
+        
         overlay.classList.add('show');
         
         // Focus input after a short delay to ensure overlay is visible
@@ -535,6 +538,9 @@ class TodayTodo {
         overlay.classList.remove('show');
         input.value = '';
         this.currentEditingTaskId = null;
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
     }
     
     handleTaskSubmit() {

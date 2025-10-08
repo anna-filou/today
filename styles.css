@@ -615,6 +615,10 @@ body {
     z-index: 1000;
     align-items: flex-end;
     padding-bottom: env(safe-area-inset-bottom);
+    /* Prevent viewport changes when keyboard appears */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    overflow: hidden;
 }
 
 .add-task-overlay.show {
