@@ -1,12 +1,13 @@
-const CACHE_NAME = 'today-todo-v1';
+const VERSION = '1.0.11';
+const CACHE_NAME = `today-todo-v${VERSION}`;
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json',
-    '/icon-192x192.png',
-    '/icon-512x512.png'
+    '/today/',
+    '/today/index.html',
+    '/today/styles.css',
+    '/today/app.js',
+    '/today/manifest.json',
+    '/today/icon-192x192.png',
+    '/today/icon-512x512.png'
 ];
 
 // Install event - cache resources

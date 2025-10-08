@@ -51,31 +51,25 @@ Only HTML, CSS and JS. PWA. Saves tasks in local storage.
 
 ## Deployment & Updates
 
-### Automatic Updates
-The PWA automatically checks for updates when:
-- The page loads
-- Every 5 minutes while the app is open
-- When the user refreshes the page
+### Version Update Process
+When you make changes to the code, you **must** update the version number:
 
-### Manual Version Updates
-When you make changes to the code, update the version to force a refresh:
+1. **Update `sw.js`**: Change the `VERSION` constant (e.g., `'1.0.11'` → `'1.0.12'`)
+2. **Update `manifest.json`**: Change the `version` field to match
+3. **Commit and Push**: Deploy to your hosting
 
-```bash
-node update-version.js 1.0.1
-```
-
-This will:
-1. Update version numbers in all relevant files
-2. Force the service worker to detect changes
-3. Trigger update notifications for users
-4. Automatically refresh the app with new content
+### Why Version Updates Matter
+- **Service Worker Detection**: Changing the `VERSION` in `sw.js` creates a new cache name
+- **Forces Refresh**: Service worker detects the change and installs new version
+- **Cache Busting**: Old caches are automatically cleaned up
+- **User Updates**: Users get notified of the new version
 
 ### How Updates Work
-1. **Detection**: Service worker checks for file changes using version parameters
-2. **Notification**: Users see a blue banner when updates are available
+1. **Detection**: Service worker detects new `sw.js` file with different version
+2. **Notification**: Users see update banner when new version is available
 3. **Installation**: One-click update process
 4. **Activation**: Page automatically refreshes with new version
-5. **Cache Management**: Old caches are automatically cleaned up
+5. **Cache Cleanup**: Old caches are deleted, new version is cached
 
 ## Development Notes
 
