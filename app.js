@@ -76,16 +76,31 @@ class TodayTodo {
         const unfinishedTasks = this.tasks.filter(task => !task.completed);
         
         if (unfinishedTasks.length > 0) {
-            const yesterdayTasksList = document.getElementById('yesterdayTasks');
-            yesterdayTasksList.innerHTML = '';
+            const unfinishedTasksList = document.getElementById('unfinishedTasks');
+            unfinishedTasksList.innerHTML = '';
             
             unfinishedTasks.forEach(task => {
-                const li = document.createElement('li');
-                li.textContent = task.text;
-                yesterdayTasksList.appendChild(li);
+                const taskDiv = document.createElement('div');
+                taskDiv.className = 'unfinished-task';
+                
+                const taskName = document.createElement('div');
+                taskName.className = 'unfinished-task-name';
+                taskName.textContent = task.text;
+                
+                taskDiv.appendChild(taskName);
+                
+                // Only add duration if it exists
+                if (task.duration) {
+                    const taskDuration = document.createElement('div');
+                    taskDuration.className = 'unfinished-task-duration';
+                    taskDuration.textContent = this.formatDuration(task.duration);
+                    taskDiv.appendChild(taskDuration);
+                }
+                
+                unfinishedTasksList.appendChild(taskDiv);
             });
             
-            document.getElementById('resetModal').classList.add('show');
+            document.getElementById('newDayModal').classList.add('show');
         }
     }
     
@@ -98,7 +113,7 @@ class TodayTodo {
     clearAndStartToday() {
         this.tasks = [];
         this.saveData();
-        document.getElementById('resetModal').classList.remove('show');
+        document.getElementById('newDayModal').classList.remove('show');
         this.updateUI();
     }
     
@@ -131,8 +146,8 @@ class TodayTodo {
             }
         });
         
-        // Reset modal
-        document.getElementById('clearAndStart').addEventListener('click', () => {
+        // New day modal
+        document.getElementById('clearTodayBtn').addEventListener('click', () => {
             this.clearAndStartToday();
         });
         
@@ -348,14 +363,25 @@ class TodayTodo {
         if (task) {
             const newText = prompt('Edit task:', task.text);
             if (newText !== null && newText.trim()) {
-                const duration = this.extractDuration(newText);
-                task.text = this.removeDurationFromText(newText.trim());
-                task.duration = duration;
+                const extractedDuration = this.extractDuration(newText);
+                const cleanText = this.removeDurationFromText(newText.trim());
+                
+                // Always update the text
+                task.text = cleanText;
+                
+                // Only update duration if user explicitly included one in their edit
+                // If they didn't include a duration, preserve the existing one
+                if (extractedDuration > 0) {
+                    task.duration = extractedDuration;
+                }
+                // If extractedDuration is 0, we keep the existing task.duration unchanged
+                
                 this.saveData();
                 this.updateUI();
             }
         }
     }
+    
     
     deleteTask(id) {
         this.tasks = this.tasks.filter(t => t.id !== id);
@@ -626,7 +652,7 @@ class TodayTodo {
         
         sortedTasks.forEach(task => {
             const li = document.createElement('li');
-            li.className = 'task-item';
+            li.className = `task-item ${!task.text && task.duration && task.duration > 0 ? 'no-name' : ''}`;
             li.dataset.taskId = task.id;
             
             // Add delete indicator
@@ -641,8 +667,7 @@ class TodayTodo {
             
             const textSpan = document.createElement('span');
             textSpan.className = `task-text ${task.completed ? 'completed' : ''}`;
-            textSpan.textContent = task.text;
-            textSpan.addEventListener('click', () => this.editTask(task.id));
+            textSpan.textContent = task.text || 'Add task name';
             
             let durationSpan = null;
             if (task.duration && task.duration > 0) {
@@ -655,6 +680,19 @@ class TodayTodo {
             li.appendChild(textSpan);
             if (durationSpan) {
                 li.appendChild(durationSpan);
+            }
+            
+            // Single click listener for task editing - works for all cases
+            li.addEventListener('click', (e) => {
+                // Don't trigger if clicking on checkbox
+                if (!e.target.classList.contains('task-checkbox')) {
+                    this.editTask(task.id);
+                }
+            });
+            
+            // Only show pointer cursor if task is editable (has text or duration)
+            if (task.text || (task.duration && task.duration > 0)) {
+                li.style.cursor = 'pointer';
             }
             
             // Add swipe handlers

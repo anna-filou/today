@@ -26,7 +26,7 @@ body {
 }
 
 .header {
-    padding: 16px 20px;
+    padding: calc(16px + env(safe-area-inset-top)) 20px 16px 20px;
     border-bottom: 1px solid #333;
     background-color: #000000;
     position: sticky;
@@ -274,6 +274,14 @@ body {
     color: #666;
 }
 
+.task-item.no-name {
+    cursor: pointer;
+}
+
+.task-item.no-name .task-text {
+    opacity: 0.5;
+}
+
 .task-duration {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 12px;
@@ -465,10 +473,140 @@ body {
     z-index: 10;
 }
 
+/* New Day Modal */
+.new-day-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.new-day-header h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.35;
+}
+
+.new-day-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.new-day-description {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #ffffff;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
+}
+
+.unfinished-tasks-wrapper {
+    flex: 1;
+    position: relative;
+    max-height: 380px;
+    min-height: 0;
+}
+
+.unfinished-tasks {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100%;
+    max-height: 380px;
+    padding-bottom: 40px;
+}
+
+.scroll-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent 0%, #1a1a1a 100%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.unfinished-task {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 2px dashed #4f4f4f;
+}
+
+.unfinished-task:first-child {
+    border-top: 2px dashed #4f4f4f;
+}
+
+.unfinished-task-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    flex: 1;
+    line-height: 1.35;
+}
+
+.unfinished-task-duration {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 100px;
+    padding: 4px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ffffff;
+    opacity: 0.8;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.new-day-actions {
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.clear-today-btn {
+    width: 100%;
+    background-color: #ffffff;
+    color: #000000;
+    border: none;
+    border-radius: 1000px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    padding: 13px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.clear-today-btn strong {
+    font-weight: 700;
+}
+
+.clear-today-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.clear-today-btn:active {
+    background-color: #e0e0e0;
+}
+
 /* Toast Notification */
 .toast {
     position: fixed;
-    bottom: calc(var(--bottom-nav-height, 100px) + 16px);
+    bottom: calc(var(--bottom-nav-height, 100px) + 16px + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.20);
@@ -596,11 +734,11 @@ body {
 /* Add Task Prompt */
 .add-task-prompt {
     position: fixed;
-    bottom: 100px;
+    bottom: calc(100px + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    z-index: 50;
+    z-index: 200;
     display: none;
 }
 
@@ -626,7 +764,7 @@ body {
     left: 0;
     right: 0;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.44) 18.27%, rgba(0, 0, 0, 0.71) 45.67%, #000 70.19%);
-    padding: 100px 20px 10px 20px;
+    padding: 100px 20px calc(10px + env(safe-area-inset-bottom)) 20px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -688,8 +826,8 @@ body {
 /* Floating Next Day Button */
 .floating-next-day-btn {
     position: fixed;
-    bottom: 120px;
-    right: 20px;
+    bottom: calc(120px + env(safe-area-inset-bottom));
+    right: calc(20px + env(safe-area-inset-right));
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -719,7 +857,7 @@ body {
 /* Responsive design */
 @media (max-width: 480px) {
     .header {
-        padding: 15px;
+        padding: 20px;
     }
     
     .input-container {
