@@ -42,21 +42,67 @@ body {
     margin: 0 auto;
 }
 
+.header-content.centered {
+    justify-content: center;
+}
+
 .header-left {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.day {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 42px;
+    font-weight: 900; /* Black weight */
+    color: #ffffff;
+    line-height: 100%;
+    letter-spacing: -0.03em; /* -3% */
+}
+
 .date {
-    font-size: 1.1rem;
-    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.date-main {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 700; /* Bold weight */
+    color: #ffffff;
+    line-height: 100%;
+    letter-spacing: -0.01em; /* -1% */
+}
+
+.date-year {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 700; /* Bold weight */
+    color: #ffffff;
+    opacity: 0.8; /* 80% opacity */
+    line-height: 100%;
+    letter-spacing: -0.01em; /* -1% */
 }
 
 .remaining-time {
-    font-size: 0.9rem;
-    color: #888;
-    font-weight: 500;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 700; /* Bold weight */
+    color: #ffffff;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: right;
+    font-variant-numeric: lining-nums tabular-nums;
+    padding: 10px 16px;
+    background-color: rgba(255, 255, 255, 0.2); /* White with 20% opacity */
+    border-radius: 18px; /* Pill shape - half of 36px height */
 }
 
 .header-settings {
@@ -77,10 +123,8 @@ body {
 
 .main {
     flex: 1;
-    padding: 20px;
     display: flex;
     flex-direction: column;
-    padding-bottom: 100px; /* Space for fixed input container */
     min-height: 0; /* Allow flex item to shrink */
     overflow: hidden; /* Prevent overflow */
 }
@@ -128,38 +172,66 @@ body {
     flex: 1;
     overflow-y: auto; /* Only scroll when content overflows */
     min-height: 0; /* Allow flex item to shrink */
-    /* Ensure the list doesn't take up unnecessary space when empty */
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 120px - 100px); /* viewport height - header height - input container height */
+    padding-bottom: 150px; /* ensure last item clears bottom nav */
 }
 
 .task-item {
+    position: relative;
     display: flex;
+    padding: 24px 20px 24px 24px;
     align-items: center;
-    padding: 16px 0;
-    border-bottom: 1px solid #222;
-    animation: slideIn 0.3s ease;
+    gap: 16px;
     flex-shrink: 0; /* Prevent items from shrinking */
+    /* Custom dashed border: 2px dash, 5px gap */
+    background-image: 
+        repeating-linear-gradient(
+            to right,
+            #4F4F4F 0px,
+            #4F4F4F 2px,
+            transparent 2px,
+            transparent 7px
+        );
+    background-size: 7px 2px;
+    background-position: 0 100%;
+    background-repeat: repeat-x;
+    background-color: #000000;
+    transition: transform 0.3s ease;
+    touch-action: pan-y; /* Allow vertical scrolling while capturing horizontal swipes */
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.task-item.swiping {
+    transition: none; /* Disable transition during active swipe */
 }
+
+.delete-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100px;
+    background-color: #ff4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.task-item.swiping .delete-indicator {
+    opacity: 1;
+}
+
+
 
 .task-checkbox {
     width: 24px;
     height: 24px;
     border: 2px solid #666;
-    border-radius: 50%;
-    margin-right: 16px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
     background-color: transparent;
@@ -167,8 +239,8 @@ body {
 }
 
 .task-checkbox.checked {
-    background-color: #ffffff;
-    border-color: #ffffff;
+    background-color: #666;
+    border-color: #666;
     position: relative;
 }
 
@@ -185,21 +257,36 @@ body {
 
 .task-text {
     flex: 1;
-    font-size: 1rem;
-    line-height: 1.5;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700; /* Bold weight */
+    line-height: 135%;
+    color: #ffffff;
     cursor: pointer;
     word-break: break-word;
 }
 
 .task-text.completed {
-    text-decoration: line-through;
     color: #666;
 }
 
 .task-duration {
-    color: #666;
-    font-size: 0.9rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 700; /* Bold weight */
+    color: #ffffff;
+    line-height: 100%;
+    letter-spacing: 0%;
+    font-variant-numeric: lining-nums tabular-nums;
+    padding: 4px 8px;
+    background-color: #333;
+    border-radius: 10px;
     margin-left: 8px;
+    display: inline-block;
+}
+
+.task-duration.completed {
+    color: #666;
 }
 
 .task-delete {
@@ -239,20 +326,31 @@ body {
 }
 
 .modal-content {
-    background-color: #111;
-    border: 1px solid #333;
-    border-radius: 16px;
-    padding: 30px;
-    max-width: 400px;
+    background-color: #1a1a1a;
+    border: none;
+    border-radius: 24px;
+    padding: 0;
     width: 100%;
     max-height: 80vh;
-    overflow-y: auto;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-.modal-content h2 {
-    margin-bottom: 20px;
-    text-align: center;
-    font-size: 1.3rem;
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 20px 24px;
+    border-bottom: 1px solid #333;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: left;
 }
 
 .clear-button {
@@ -274,46 +372,161 @@ body {
 }
 
 .close-button {
-    width: 100%;
-    padding: 16px;
-    background-color: #333;
-    color: #ffffff;
+    background: none;
     border: none;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    font-weight: 600;
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 300;
     cursor: pointer;
+    padding: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
     transition: background-color 0.2s ease;
-    margin-top: 20px;
 }
 
 .close-button:hover {
-    background-color: #444;
+    background-color: #333;
 }
 
 .setting-item {
-    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 24px 24px;
 }
 
-.setting-item label {
-    display: block;
-    margin-bottom: 8px;
+.setting-label {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
     font-weight: 500;
+    color: #ffffff;
+}
+
+.time-display {
+    background-color: #333;
+    border: none;
+    border-radius: 16px;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-width: 60px;
+}
+
+.time-display:hover {
+    background-color: #444;
+}
+
+.clear-all-btn {
+    width: 100%;
+    background-color: #8B0000;
+    border: none;
+    border-radius: 16px;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.clear-all-btn:hover {
+    background-color: #A00000;
+}
+
+.setting-item {
+    position: relative;
+}
+
+.setting-item:not(:last-child) {
+    border-bottom: 1px solid #333;
 }
 
 .setting-item input {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 12px;
-    background-color: #222;
-    border: 1px solid #444;
-    border-radius: 8px;
-    color: #ffffff;
-    font-size: 1rem;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
 }
 
-.setting-item input:focus {
-    outline: none;
-    border-color: #666;
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: calc(var(--bottom-nav-height, 100px) + 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.20);
+    color: #ffffff;
+    padding: 4px 12px 4px 8px;
+    border-radius: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.toast.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.toast svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    flex-shrink: 0;
+}
+
+/* Time Picker Grid */
+.time-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 24px;
+}
+
+.time-option {
+    background-color: #333;
+    border: none;
+    border-radius: 12px;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 16px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.time-option:hover {
+    background-color: #444;
+}
+
+.time-option.selected {
+    background-color: #ffffff;
+    color: #000000;
 }
 
 #yesterdayTasks {
@@ -333,10 +546,145 @@ body {
     border-bottom: none;
 }
 
+/* Empty State */
+.empty-state {
+    display: none;
+    text-align: center;
+    padding: 0 20px 150px;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-state.show {
+    display: flex;
+}
+
+.empty-state-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.dotted-line {
+    width: 120px;
+    height: 1px;
+    background: repeating-linear-gradient(
+        to right,
+        #666 0px,
+        #666 4px,
+        transparent 4px,
+        transparent 8px
+    );
+    margin: 0 auto 20px auto;
+}
+
+.empty-state-text {
+    font-size: 0.9rem;
+    color: #ccc;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+/* Add Task Prompt */
+.add-task-prompt {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 50;
+    display: none;
+}
+
+.add-task-prompt.show {
+    display: block;
+}
+
+.add-task-text {
+    font-size: 0.9rem;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.add-task-arrow {
+    font-size: 1.2rem;
+    color: #888;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.44) 18.27%, rgba(0, 0, 0, 0.71) 45.67%, #000 70.19%);
+    padding: 100px 20px 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 100;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+}
+
+.nav-btn svg {
+    fill: currentColor;
+}
+
+.sort-btn, .settings-btn {
+    width: 80px;
+    height: 48px;
+    background-color: #222;
+    border-radius: 1000px;
+}
+
+.add-btn {
+    width: 120px;
+    height: 56px;
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 28px;
+}
+
+.sort-btn:hover, .settings-btn:hover {
+    background-color: #333;
+    color: #ffffff;
+}
+
+.add-btn:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.05);
+}
+
+.add-btn:active {
+    transform: scale(0.95);
+}
+
+/* Legacy input container (hidden by default) */
+.input-container.legacy {
+    display: none;
+}
+
 /* Floating Next Day Button */
 .floating-next-day-btn {
     position: fixed;
-    bottom: 100px;
+    bottom: 120px;
     right: 20px;
     width: 56px;
     height: 56px;
@@ -370,19 +718,9 @@ body {
         padding: 15px;
     }
     
-    .main {
-        padding: 15px;
-        padding-bottom: 100px;
-    }
-    
     .input-container {
         padding: 15px;
-    }
-    
-    .modal-content {
-        padding: 20px;
-        margin: 10px;
-    }
+    } 
     
     .floating-next-day-btn {
         bottom: 90px;

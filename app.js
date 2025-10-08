@@ -5,6 +5,7 @@ class TodayTodo {
             resetTime: '04:00'
         };
         this.lastVisitDate = null;
+        this.sortMode = 'creation'; // 'creation' or 'duration'
         
         this.init();
     }
@@ -135,25 +136,88 @@ class TodayTodo {
             this.clearAndStartToday();
         });
         
-        // Header settings
-        document.getElementById('headerSettingsButton').addEventListener('click', () => {
+        // Bottom navigation settings (replacing header settings)
+        document.getElementById('settingsBtn').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.add('show');
+        });
+        
+        // Add button
+        document.getElementById('addBtn').addEventListener('click', () => {
+            this.showAddTaskModal();
+        });
+        
+        // Sort button - toggle between creation and duration sorting
+        document.getElementById('sortBtn').addEventListener('click', () => {
+            this.toggleSortMode();
         });
         
         document.getElementById('closeSettings').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.remove('show');
         });
         
+        // Clear all tasks button
+        document.getElementById('clearAllTasks').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all tasks? This cannot be undone.')) {
+                this.clearAllTasks();
+            }
+        });
+        
         // Next day simulation button
-        document.getElementById('nextDayBtn').addEventListener('click', () => {
+        const nextDayBtn = document.getElementById('nextDayBtn');
+        nextDayBtn.addEventListener('click', () => {
             this.simulateNextDay();
         });
         
-        // Settings input
+        // Long press to hide button (for demo purposes only - state not remembered)
+        let longPressTimer = null;
+        nextDayBtn.addEventListener('mousedown', () => {
+            longPressTimer = setTimeout(() => {
+                nextDayBtn.style.display = 'none';
+                console.log('Next Day button hidden for demo - refresh page to show again');
+            }, 1000); // 1 second long press
+        });
+        
+        nextDayBtn.addEventListener('mouseup', () => {
+            clearTimeout(longPressTimer);
+        });
+        
+        nextDayBtn.addEventListener('mouseleave', () => {
+            clearTimeout(longPressTimer);
+        });
+        
+        // Touch events for mobile
+        nextDayBtn.addEventListener('touchstart', () => {
+            longPressTimer = setTimeout(() => {
+                nextDayBtn.style.display = 'none';
+                console.log('Next Day button hidden for demo - refresh page to show again');
+            }, 1000); // 1 second long press
+        });
+        
+        nextDayBtn.addEventListener('touchend', () => {
+            clearTimeout(longPressTimer);
+        });
+        
+        // Settings input (hidden, kept for compatibility)
         document.getElementById('resetTime').addEventListener('change', (e) => {
             this.settings.resetTime = e.target.value;
+            this.updateTimeDisplay();
             this.saveData();
         });
+        
+        // Time display button - open custom time picker
+        document.getElementById('resetTimeDisplay').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showTimePicker();
+        });
+        
+        // Close time picker
+        document.getElementById('closeTimePicker').addEventListener('click', () => {
+            document.getElementById('timePickerModal').classList.remove('show');
+        });
+        
+        // Initialize time picker
+        this.initializeTimePicker();
         
         // Close modals when clicking outside
         document.querySelectorAll('.modal').forEach(modal => {
@@ -166,6 +230,7 @@ class TodayTodo {
         
         // Set initial settings value
         document.getElementById('resetTime').value = this.settings.resetTime;
+        this.updateTimeDisplay();
     }
     
     addTask(text) {
@@ -183,6 +248,9 @@ class TodayTodo {
         this.tasks.push(task);
         this.saveData();
         this.updateUI();
+        
+        // Show toast notification
+        this.showToast('Task added');
     }
     
     extractDuration(text) {
@@ -222,13 +290,48 @@ class TodayTodo {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         
-        if (hours > 0 && mins > 0) {
-            return `${hours}h${mins}m`;
-        } else if (hours > 0) {
-            return `${hours}h`;
+        if (hours > 0) {
+            return `${hours}:${mins.toString().padStart(2, '0')}`;
         } else {
-            return `${mins}m`;
+            return `0:${mins.toString().padStart(2, '0')}`;
         }
+    }
+    
+    toggleSortMode() {
+        this.sortMode = this.sortMode === 'creation' ? 'duration' : 'creation';
+        this.renderTasks();
+        
+        // Show toast notification
+        const message = this.sortMode === 'duration' ? 'Sorted by duration' : 'Sorted by creation';
+        this.showToast(message);
+    }
+    
+    getSortedTasks() {
+        if (this.sortMode === 'duration') {
+            // Sort by duration: longest first, tasks without duration at the bottom
+            return [...this.tasks].sort((a, b) => {
+                const aDuration = a.duration || 0;
+                const bDuration = b.duration || 0;
+                
+                // If both have no duration, keep original order
+                if (aDuration === 0 && bDuration === 0) {
+                    return 0;
+                }
+                // If only a has no duration, put it after b
+                if (aDuration === 0) {
+                    return 1;
+                }
+                // If only b has no duration, put it after a
+                if (bDuration === 0) {
+                    return -1;
+                }
+                // Both have durations, sort by longest first
+                return bDuration - aDuration;
+            });
+        }
+        
+        // Default: creation order (as they appear in the array)
+        return this.tasks;
     }
     
     toggleTask(id) {
@@ -260,21 +363,44 @@ class TodayTodo {
         this.updateUI();
     }
     
+    clearAllTasks() {
+        this.tasks = [];
+        this.saveData();
+        this.updateUI();
+        // Close settings modal after clearing
+        document.getElementById('settingsModal').classList.remove('show');
+    }
+    
     updateUI() {
         this.updateDate();
         this.updateRemainingTime();
         this.renderTasks();
+        this.updateEmptyState();
     }
     
     updateDate() {
+        const dayElement = document.getElementById('currentDay');
         const dateElement = document.getElementById('currentDate');
+        const yearElement = document.getElementById('currentYear');
         const today = new Date();
-        const options = { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric'
-        };
-        dateElement.textContent = today.toLocaleDateString('en-US', options);
+        
+        // Update day (e.g., "WED")
+        const dayOptions = { weekday: 'short' };
+        dayElement.textContent = today.toLocaleDateString('en-US', dayOptions).toUpperCase();
+        
+        // Update date (e.g., "Oct 8")
+        const monthOptions = { month: 'short' };
+        const dayOptions2 = { day: 'numeric' };
+        
+        const month = today.toLocaleDateString('en-US', monthOptions);
+        const day = today.toLocaleDateString('en-US', dayOptions2);
+        
+        dateElement.textContent = `${month} ${day}`;
+        
+        // Update year (e.g., "2025")
+        const yearOptions = { year: 'numeric' };
+        const year = today.toLocaleDateString('en-US', yearOptions);
+        yearElement.textContent = year;
     }
     
     updateRemainingTime() {
@@ -300,13 +426,201 @@ class TodayTodo {
         }
     }
     
+    updateEmptyState() {
+        const emptyState = document.getElementById('emptyState');
+        const taskList = document.getElementById('taskList');
+        const addTaskPrompt = document.getElementById('addTaskPrompt');
+        const headerContent = document.querySelector('.header-content');
+        const headerRight = document.querySelector('.header-right');
+        
+        // Calculate total remaining time from unfinished tasks
+        const unfinishedTasks = this.tasks.filter(task => !task.completed);
+        const totalRemainingMinutes = unfinishedTasks.reduce((total, task) => {
+            return total + (task.duration || 0);
+        }, 0);
+        
+        // Check if there's any remaining time to display
+        const hasRemainingTime = totalRemainingMinutes > 0;
+        
+        if (this.tasks.length === 0) {
+            emptyState.classList.add('show');
+            taskList.style.display = 'none';
+            addTaskPrompt.classList.add('show');
+            headerContent.classList.add('centered');
+            headerRight.style.display = 'none';
+        } else {
+            emptyState.classList.remove('show');
+            taskList.style.display = 'block';
+            addTaskPrompt.classList.remove('show');
+            
+            // Only move header left if there's remaining time to display
+            if (hasRemainingTime) {
+                headerContent.classList.remove('centered');
+                headerRight.style.display = 'flex';
+            } else {
+                headerContent.classList.add('centered');
+                headerRight.style.display = 'none';
+            }
+        }
+    }
+    
+    showAddTaskModal() {
+        const taskText = prompt('Add a task:');
+        if (taskText !== null && taskText.trim()) {
+            this.addTask(taskText.trim());
+        }
+    }
+    
+    updateTimeDisplay() {
+        const timeDisplay = document.getElementById('resetTimeDisplay');
+        const resetTime = this.settings.resetTime;
+        
+        // Display in 24-hour format
+        timeDisplay.textContent = resetTime;
+    }
+    
+    initializeTimePicker() {
+        const timePickerGrid = document.querySelector('.time-picker-grid');
+        timePickerGrid.innerHTML = '';
+        
+        // Create 24 hour options (00:00 to 23:00)
+        for (let hour = 0; hour < 24; hour++) {
+            const button = document.createElement('button');
+            button.className = 'time-option';
+            button.textContent = `${hour.toString().padStart(2, '0')}:00`;
+            button.dataset.hour = hour;
+            
+            button.addEventListener('click', () => {
+                this.selectTime(hour);
+            });
+            
+            timePickerGrid.appendChild(button);
+        }
+        
+        this.updateTimePickerSelection();
+    }
+    
+    showTimePicker() {
+        this.updateTimePickerSelection();
+        document.getElementById('timePickerModal').classList.add('show');
+    }
+    
+    selectTime(hour) {
+        this.settings.resetTime = `${hour.toString().padStart(2, '0')}:00`;
+        this.updateTimeDisplay();
+        this.updateTimePickerSelection();
+        this.saveData();
+        
+        // Close the time picker after selection
+        setTimeout(() => {
+            document.getElementById('timePickerModal').classList.remove('show');
+        }, 200);
+    }
+    
+    updateTimePickerSelection() {
+        const currentHour = parseInt(this.settings.resetTime.split(':')[0]);
+        const timeOptions = document.querySelectorAll('.time-option');
+        
+        timeOptions.forEach(option => {
+            const optionHour = parseInt(option.dataset.hour);
+            if (optionHour === currentHour) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+    }
+    
+    showToast(message) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        
+        // Hide toast after 2 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+    
+    addSwipeHandlers(element, taskId) {
+        let startX = 0;
+        let currentX = 0;
+        let isSwiping = false;
+        const swipeThreshold = 100; // pixels to trigger delete
+        
+        element.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            isSwiping = true;
+            element.classList.add('swiping');
+        });
+        
+        element.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+            
+            currentX = e.touches[0].clientX;
+            const diffX = currentX - startX;
+            
+            // Only allow left or right swipes (not both directions)
+            if (Math.abs(diffX) > 10) {
+                e.preventDefault(); // Prevent scrolling when swiping
+                element.style.transform = `translateX(${diffX}px)`;
+            }
+        });
+        
+        element.addEventListener('touchend', (e) => {
+            if (!isSwiping) return;
+            
+            const diffX = currentX - startX;
+            element.classList.remove('swiping');
+            
+            // Check if swipe exceeded threshold (either left or right)
+            if (Math.abs(diffX) > swipeThreshold) {
+                // Animate off screen
+                const direction = diffX > 0 ? 1 : -1;
+                element.style.transform = `translateX(${direction * window.innerWidth}px)`;
+                
+                // Delete task after animation
+                setTimeout(() => {
+                    this.deleteTask(taskId);
+                }, 300);
+            } else {
+                // Snap back to original position
+                element.style.transform = 'translateX(0)';
+            }
+            
+            isSwiping = false;
+            startX = 0;
+            currentX = 0;
+        });
+        
+        element.addEventListener('touchcancel', () => {
+            element.classList.remove('swiping');
+            element.style.transform = 'translateX(0)';
+            isSwiping = false;
+            startX = 0;
+            currentX = 0;
+        });
+    }
+    
     renderTasks() {
         const taskList = document.getElementById('taskList');
         taskList.innerHTML = '';
         
-        this.tasks.forEach(task => {
+        // Get sorted tasks based on current sort mode
+        const sortedTasks = this.getSortedTasks();
+        
+        sortedTasks.forEach(task => {
             const li = document.createElement('li');
             li.className = 'task-item';
+            li.dataset.taskId = task.id;
+            
+            // Add delete indicator
+            const deleteIndicator = document.createElement('div');
+            deleteIndicator.className = 'delete-indicator';
+            deleteIndicator.textContent = 'Delete';
+            li.appendChild(deleteIndicator);
             
             const checkbox = document.createElement('div');
             checkbox.className = `task-checkbox ${task.completed ? 'checked' : ''}`;
@@ -317,19 +631,21 @@ class TodayTodo {
             textSpan.textContent = task.text;
             textSpan.addEventListener('click', () => this.editTask(task.id));
             
-            const durationSpan = document.createElement('span');
-            durationSpan.className = 'task-duration';
-            durationSpan.textContent = this.formatDuration(task.duration);
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'task-delete';
-            deleteBtn.textContent = '×';
-            deleteBtn.addEventListener('click', () => this.deleteTask(task.id));
+            let durationSpan = null;
+            if (task.duration && task.duration > 0) {
+                durationSpan = document.createElement('span');
+                durationSpan.className = `task-duration ${task.completed ? 'completed' : ''}`;
+                durationSpan.textContent = this.formatDuration(task.duration);
+            }
             
             li.appendChild(checkbox);
             li.appendChild(textSpan);
-            li.appendChild(durationSpan);
-            li.appendChild(deleteBtn);
+            if (durationSpan) {
+                li.appendChild(durationSpan);
+            }
+            
+            // Add swipe handlers
+            this.addSwipeHandlers(li, task.id);
             
             taskList.appendChild(li);
         });
