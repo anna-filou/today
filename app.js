@@ -7,6 +7,7 @@ class TodayTodo {
         this.lastVisitDate = null;
         this.sortMode = 'creation'; // 'creation' or 'duration'
         this.currentEditingTaskId = null;
+        this.longPressTriggered = false; // Track if settings button long press triggered
         
         this.init();
     }
@@ -165,7 +166,12 @@ class TodayTodo {
         });
         
         // Bottom navigation settings (replacing header settings)
-        document.getElementById('settingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsBtn').addEventListener('click', (e) => {
+            // Don't open settings if long press was triggered
+            if (this.longPressTriggered) {
+                this.longPressTriggered = false;
+                return;
+            }
             document.getElementById('settingsModal').classList.add('show');
         });
         
@@ -254,38 +260,38 @@ class TodayTodo {
             }
         });
         
-        // Next day simulation button
-        const nextDayBtn = document.getElementById('nextDayBtn');
-        nextDayBtn.addEventListener('click', () => {
-            this.simulateNextDay();
-        });
-        
-        // Long press to hide button (for demo purposes only - state not remembered)
+        // Long press settings button to simulate next day (for testing/debugging)
+        const settingsBtn = document.getElementById('settingsBtn');
         let longPressTimer = null;
-        nextDayBtn.addEventListener('mousedown', () => {
+        
+        settingsBtn.addEventListener('mousedown', () => {
+            this.longPressTriggered = false;
             longPressTimer = setTimeout(() => {
-                nextDayBtn.style.display = 'none';
-                console.log('Next Day button hidden for demo - refresh page to show again');
+                this.longPressTriggered = true;
+                this.simulateNextDay();
+                console.log('Next day simulated via long press on settings button');
             }, 1000); // 1 second long press
         });
         
-        nextDayBtn.addEventListener('mouseup', () => {
+        settingsBtn.addEventListener('mouseup', () => {
             clearTimeout(longPressTimer);
         });
         
-        nextDayBtn.addEventListener('mouseleave', () => {
+        settingsBtn.addEventListener('mouseleave', () => {
             clearTimeout(longPressTimer);
         });
         
         // Touch events for mobile
-        nextDayBtn.addEventListener('touchstart', () => {
+        settingsBtn.addEventListener('touchstart', (e) => {
+            this.longPressTriggered = false;
             longPressTimer = setTimeout(() => {
-                nextDayBtn.style.display = 'none';
-                console.log('Next Day button hidden for demo - refresh page to show again');
+                this.longPressTriggered = true;
+                this.simulateNextDay();
+                console.log('Next day simulated via long press on settings button');
             }, 1000); // 1 second long press
         });
         
-        nextDayBtn.addEventListener('touchend', () => {
+        settingsBtn.addEventListener('touchend', (e) => {
             clearTimeout(longPressTimer);
         });
         

@@ -77,10 +77,7 @@ When you make changes to the code, you **must** update the version number in 3 p
 ## Development Notes
 
 ### Testing/Debugging Features
-- **Next Day Button**: Floating button for testing daily reset functionality
-  - **Long Press to Hide**: Long press (1 second) the Next Day button to hide it for demo purposes
-  - **State Not Remembered**: Button reappears on page refresh - this is intentional for demo purposes
-  - **Purpose**: Allows showing the app to others without the debug button visible
+- **Simulate Next Day**: Long press the Settings button (gear icon) for 1 second to trigger the daily reset modal. Normal tap opens Settings, long press triggers the reset simulation
 
 ### Settings & Time Picker
 - **Custom Time Picker**: 24-hour grid interface for setting daily reset time, works across all devices
