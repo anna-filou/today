@@ -2,13 +2,16 @@ class TodayTodo {
     constructor() {
         this.tasks = [];
         this.settings = {
-            resetTime: '04:00'
+            resetTime: '04:00',
+            roundDuration: false
         };
         this.lastVisitDate = null;
         this.sortMode = 'creation'; // 'creation' or 'duration'
         this.currentEditingTaskId = null;
         this.longPressTriggered = false; // Track if settings button long press triggered
         this.selectedDuration = null; // Track selected duration from pills (in minutes)
+        this.deletedTask = null; // Store deleted task for undo
+        this.undoTimeout = null; // Timer for clearing deleted task
         
         this.init();
     }
@@ -20,9 +23,10 @@ class TodayTodo {
         this.updateUI();
         this.registerServiceWorker();
         
-        // Check for daily reset every minute
+        // Check for daily reset and update progress every minute
         setInterval(() => {
             this.checkDailyReset();
+            this.updateDayProgress();
         }, 60000); // 60000ms = 1 minute
     }
     
@@ -275,6 +279,25 @@ class TodayTodo {
             document.getElementById('settingsModal').classList.remove('show');
         });
         
+        // Round duration toggle
+        document.getElementById('roundDurationToggle').addEventListener('click', () => {
+            this.toggleRoundDuration();
+        });
+        
+        // Toggle rounding by tapping the remaining time in header
+        const remainingTimeElement = document.getElementById('remainingTime');
+        
+        // Click event for desktop
+        remainingTimeElement.addEventListener('click', () => {
+            this.toggleRoundDuration();
+        });
+        
+        // Touch event for mobile
+        remainingTimeElement.addEventListener('touchend', (e) => {
+            e.preventDefault(); // Prevent click event from also firing
+            this.toggleRoundDuration();
+        }, { passive: false });
+        
         // Clear all tasks button
         document.getElementById('clearAllTasks').addEventListener('click', () => {
             if (confirm('Are you sure you want to clear all tasks? This cannot be undone.')) {
@@ -356,6 +379,7 @@ class TodayTodo {
         // Set initial settings value
         document.getElementById('resetTime').value = this.settings.resetTime;
         this.updateTimeDisplay();
+        this.updateRoundDurationDisplay();
     }
     
     addTask(text) {
@@ -517,9 +541,41 @@ class TodayTodo {
     
     
     deleteTask(id) {
+        // Store deleted task for undo
+        this.deletedTask = this.tasks.find(t => t.id === id);
+        
+        // Remove task
         this.tasks = this.tasks.filter(t => t.id !== id);
         this.saveData();
         this.updateUI();
+        
+        // Show undo toast
+        this.showUndoToast();
+        
+        // Clear deleted task after 5 seconds (toast duration)
+        if (this.undoTimeout) {
+            clearTimeout(this.undoTimeout);
+        }
+        this.undoTimeout = setTimeout(() => {
+            this.deletedTask = null;
+        }, 5000);
+    }
+    
+    undoDelete() {
+        if (this.deletedTask) {
+            // Restore task
+            this.tasks.push(this.deletedTask);
+            this.deletedTask = null;
+            
+            // Clear timeout
+            if (this.undoTimeout) {
+                clearTimeout(this.undoTimeout);
+                this.undoTimeout = null;
+            }
+            
+            this.saveData();
+            this.updateUI();
+        }
     }
     
     clearAllTasks() {
@@ -533,6 +589,7 @@ class TodayTodo {
     updateUI() {
         this.updateDate();
         this.updateRemainingTime();
+        this.updateDayProgress();
         this.renderTasks();
         this.updateEmptyState();
     }
@@ -562,22 +619,47 @@ class TodayTodo {
         yearElement.textContent = year;
     }
     
+    updateDayProgress() {
+        const progressFill = document.getElementById('dayProgressFill');
+        const now = new Date();
+        
+        // Calculate percentage of day passed
+        const totalMinutesInDay = 24 * 60; // 1440 minutes
+        const minutesPassed = now.getHours() * 60 + now.getMinutes();
+        const percentage = (minutesPassed / totalMinutesInDay) * 100;
+        
+        // Update progress bar width
+        progressFill.style.width = `${percentage}%`;
+    }
+    
     updateRemainingTime() {
         const remainingTimeElement = document.getElementById('remainingTime');
         const unfinishedTasks = this.tasks.filter(task => !task.completed);
         
-        const totalMinutes = unfinishedTasks.reduce((total, task) => {
+        let totalMinutes = unfinishedTasks.reduce((total, task) => {
             return total + (task.duration || 0);
         }, 0);
+        
+        // Round up to nearest 30 minutes if setting is enabled
+        let isRounded = false;
+        if (this.settings.roundDuration && totalMinutes > 0) {
+            const remainder = totalMinutes % 30;
+            if (remainder > 0) {
+                totalMinutes = totalMinutes + (30 - remainder);
+                isRounded = true;
+            }
+        }
         
         // Always show remaining time (even when 0:00)
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
         
+        const prefix = isRounded ? '~ ' : '';
+        
         if (hours > 0) {
-            remainingTimeElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
+            remainingTimeElement.textContent = `${prefix}${hours}:${minutes.toString().padStart(2, '0')}`;
         } else {
-            remainingTimeElement.textContent = `0:${minutes.toString().padStart(2, '0')}`;
+            remainingTimeElement.textContent = `${prefix}0:${minutes.toString().padStart(2, '0')}`;
         }
         
         // Gray out when zero
@@ -791,6 +873,19 @@ class TodayTodo {
         timeDisplay.textContent = resetTime;
     }
     
+    updateRoundDurationDisplay() {
+        const toggleBtn = document.getElementById('roundDurationToggle');
+        const toggleValue = toggleBtn.querySelector('.toggle-value');
+        toggleValue.textContent = this.settings.roundDuration ? 'Yes' : 'No';
+    }
+    
+    toggleRoundDuration() {
+        this.settings.roundDuration = !this.settings.roundDuration;
+        this.updateRoundDurationDisplay();
+        this.saveData();
+        this.updateUI();
+    }
+    
     initializeTimePicker() {
         const timePickerGrid = document.querySelector('.time-picker-grid');
         timePickerGrid.innerHTML = '';
@@ -854,6 +949,42 @@ class TodayTodo {
         setTimeout(() => {
             toast.classList.remove('show');
         }, 2000);
+    }
+    
+    showUndoToast() {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        // Set message with undo action
+        toastMessage.innerHTML = 'Task deleted · <span class="undo-link">Undo</span>';
+        toast.classList.add('show');
+        
+        // Add click listener to undo link
+        const undoLink = toast.querySelector('.undo-link');
+        const undoHandler = () => {
+            this.undoDelete();
+            toast.classList.remove('show');
+            undoLink.removeEventListener('click', undoHandler);
+            undoLink.removeEventListener('touchend', touchHandler);
+        };
+        
+        const touchHandler = (e) => {
+            e.preventDefault();
+            this.undoDelete();
+            toast.classList.remove('show');
+            undoLink.removeEventListener('click', undoHandler);
+            undoLink.removeEventListener('touchend', touchHandler);
+        };
+        
+        undoLink.addEventListener('click', undoHandler);
+        undoLink.addEventListener('touchend', touchHandler, { passive: false });
+        
+        // Hide toast after 5 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            undoLink.removeEventListener('click', undoHandler);
+            undoLink.removeEventListener('touchend', touchHandler);
+        }, 5000);
     }
     
     addSwipeHandlers(element, taskId) {
