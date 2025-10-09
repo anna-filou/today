@@ -8,6 +8,7 @@ class TodayTodo {
         this.sortMode = 'creation'; // 'creation' or 'duration'
         this.currentEditingTaskId = null;
         this.longPressTriggered = false; // Track if settings button long press triggered
+        this.selectedDuration = null; // Track selected duration from pills (in minutes)
         
         this.init();
     }
@@ -203,26 +204,47 @@ class TodayTodo {
             }
         });
         
+        // Duration pills
+        const durationPills = document.querySelectorAll('.duration-pill');
+        durationPills.forEach(pill => {
+            // Click event for desktop
+            pill.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent closing overlay
+                this.selectDurationPill(parseInt(pill.dataset.minutes));
+            });
+            
+            // Touch event for mobile
+            pill.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Prevent click event from also firing
+                e.stopPropagation(); // Prevent closing overlay
+                this.selectDurationPill(parseInt(pill.dataset.minutes));
+            }, { passive: false });
+        });
+        
         // Click/touch outside input area to close
         addTaskOverlay.addEventListener('click', (e) => {
-            // Close if clicking on overlay background or outside the input row
-            if (e.target === addTaskOverlay || !e.target.closest('.add-task-row')) {
+            // Close if clicking on overlay background or outside the container
+            if (e.target === addTaskOverlay || !e.target.closest('.add-task-container')) {
                 this.hideAddTaskModal();
             }
         });
         
         // Touch events for mobile browsers
         addTaskOverlay.addEventListener('touchstart', (e) => {
-            // Close if touching overlay background or outside the input row
-            if (e.target === addTaskOverlay || !e.target.closest('.add-task-row')) {
+            // Close if touching overlay background or outside the container
+            if (e.target === addTaskOverlay || !e.target.closest('.add-task-container')) {
                 e.preventDefault();
                 this.hideAddTaskModal();
             }
         }, { passive: false });
         
         // Prevent scrolling within the overlay - Chrome-specific fixes
+        // But allow scrolling within the duration pills container
         addTaskOverlay.addEventListener('touchmove', (e) => {
-            e.preventDefault();
+            // Allow scrolling if touching the pills container
+            if (!e.target.closest('.duration-pills-container')) {
+                e.preventDefault();
+            }
         }, { passive: false });
         
         addTaskOverlay.addEventListener('wheel', (e) => {
@@ -462,6 +484,19 @@ class TodayTodo {
         // Pre-populate input with current task text
         input.value = task.text || '';
         
+        // Set selected duration based on task's current duration
+        this.selectedDuration = task.duration || null;
+        
+        // Update pill UI to match task's duration
+        document.querySelectorAll('.duration-pill').forEach(pill => {
+            const pillMinutes = parseInt(pill.dataset.minutes);
+            if (task.duration && pillMinutes === task.duration) {
+                pill.classList.add('selected');
+            } else {
+                pill.classList.remove('selected');
+            }
+        });
+        
         // Prevent body scroll when overlay is open - Chrome-specific fixes
         document.body.style.overflow = 'hidden';
         document.body.style.position = 'fixed';
@@ -535,18 +570,21 @@ class TodayTodo {
             return total + (task.duration || 0);
         }, 0);
         
-        if (totalMinutes > 0) {
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            
-            if (hours > 0) {
-                remainingTimeElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
-            } else {
-                remainingTimeElement.textContent = `0:${minutes.toString().padStart(2, '0')}`;
-            }
-            remainingTimeElement.style.display = 'block';
+        // Always show remaining time (even when 0:00)
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        
+        if (hours > 0) {
+            remainingTimeElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
         } else {
-            remainingTimeElement.style.display = 'none';
+            remainingTimeElement.textContent = `0:${minutes.toString().padStart(2, '0')}`;
+        }
+        
+        // Gray out when zero
+        if (totalMinutes === 0) {
+            remainingTimeElement.classList.add('zero');
+        } else {
+            remainingTimeElement.classList.remove('zero');
         }
     }
     
@@ -557,40 +595,42 @@ class TodayTodo {
         const headerContent = document.querySelector('.header-content');
         const headerRight = document.querySelector('.header-right');
         
-        // Calculate total remaining time from unfinished tasks
-        const unfinishedTasks = this.tasks.filter(task => !task.completed);
-        const totalRemainingMinutes = unfinishedTasks.reduce((total, task) => {
-            return total + (task.duration || 0);
-        }, 0);
-        
-        // Check if there's any remaining time to display
-        const hasRemainingTime = totalRemainingMinutes > 0;
-        
         if (this.tasks.length === 0) {
+            // No tasks - center header and show empty state
             emptyState.classList.add('show');
             taskList.style.display = 'none';
             addTaskPrompt.classList.add('show');
             headerContent.classList.add('centered');
             headerRight.style.display = 'none';
         } else {
+            // Has tasks - always show header left-aligned with remaining time
             emptyState.classList.remove('show');
             taskList.style.display = 'block';
             addTaskPrompt.classList.remove('show');
-            
-            // Only move header left if there's remaining time to display
-            if (hasRemainingTime) {
-                headerContent.classList.remove('centered');
-                headerRight.style.display = 'flex';
-            } else {
-                headerContent.classList.add('centered');
-                headerRight.style.display = 'none';
-            }
+            headerContent.classList.remove('centered');
+            headerRight.style.display = 'flex';
         }
     }
     
     showAddTaskModal() {
         const overlay = document.getElementById('addTaskOverlay');
         const input = document.getElementById('addTaskInput');
+        const emptyState = document.getElementById('emptyState');
+        const addTaskPrompt = document.getElementById('addTaskPrompt');
+        
+        // Hide empty state content and add task prompt when modal opens
+        if (emptyState.classList.contains('show')) {
+            emptyState.style.visibility = 'hidden';
+        }
+        if (addTaskPrompt.classList.contains('show')) {
+            addTaskPrompt.style.visibility = 'hidden';
+        }
+        
+        // Reset selected duration
+        this.selectedDuration = null;
+        document.querySelectorAll('.duration-pill').forEach(pill => {
+            pill.classList.remove('selected');
+        });
         
         // Prevent body scroll when overlay is open - Chrome-specific fixes
         document.body.style.overflow = 'hidden';
@@ -601,6 +641,26 @@ class TodayTodo {
         
         // Use Visual Viewport API to handle keyboard properly on mobile
         this.setupKeyboardAwareFocus(input);
+    }
+    
+    selectDurationPill(minutes) {
+        // Update selected duration
+        this.selectedDuration = minutes;
+        
+        // Update UI
+        document.querySelectorAll('.duration-pill').forEach(pill => {
+            if (parseInt(pill.dataset.minutes) === minutes) {
+                pill.classList.add('selected');
+            } else {
+                pill.classList.remove('selected');
+            }
+        });
+        
+        // If task name is not blank, auto-submit
+        const input = document.getElementById('addTaskInput');
+        if (input.value.trim()) {
+            this.handleTaskSubmit();
+        }
     }
     
     setupKeyboardAwareFocus(element) {
@@ -634,22 +694,30 @@ class TodayTodo {
             this.keyboardCleanup = cleanup;
         }
         
-        // Wait for keyboard transition frames before focusing
+        // Wait for one frame before focusing (faster than double-RAF)
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                element.focus({ preventScroll: true });
-                ensureIntoView();
-            });
+            element.focus({ preventScroll: true });
+            ensureIntoView();
         });
     }
     
     hideAddTaskModal() {
         const overlay = document.getElementById('addTaskOverlay');
         const input = document.getElementById('addTaskInput');
+        const emptyState = document.getElementById('emptyState');
+        const addTaskPrompt = document.getElementById('addTaskPrompt');
         
         overlay.classList.remove('show');
         input.value = '';
         this.currentEditingTaskId = null;
+        
+        // Restore empty state content and add task prompt visibility
+        if (emptyState.classList.contains('show')) {
+            emptyState.style.visibility = 'visible';
+        }
+        if (addTaskPrompt.classList.contains('show')) {
+            addTaskPrompt.style.visibility = 'visible';
+        }
         
         // Clean up Visual Viewport listeners
         if (this.keyboardCleanup) {
@@ -667,7 +735,8 @@ class TodayTodo {
         const input = document.getElementById('addTaskInput');
         const taskText = input.value.trim();
         
-        if (!taskText) return;
+        // Allow submission if either text or selected duration exists
+        if (!taskText && !this.selectedDuration) return;
         
         if (this.currentEditingTaskId) {
             // Editing existing task
@@ -679,11 +748,15 @@ class TodayTodo {
                 // Always update the text
                 task.text = cleanText;
                 
-                // Only update duration if user explicitly included one in their edit
+                // Update duration: prefer typed duration, then pill selection, then keep existing
                 if (extractedDuration > 0) {
+                    // User typed a duration - always use it
                     task.duration = extractedDuration;
+                } else if (this.selectedDuration) {
+                    // No typed duration, but pill selected - use pill
+                    task.duration = this.selectedDuration;
                 }
-                // If extractedDuration is 0, we keep the existing task.duration unchanged
+                // If no typed duration and no pill selected, keep existing task.duration unchanged
                 
                 this.saveData();
                 this.updateUI();
@@ -691,7 +764,21 @@ class TodayTodo {
             }
         } else {
             // Adding new task
-            this.addTask(taskText);
+            const extractedDuration = this.extractDuration(taskText);
+            
+            if (extractedDuration > 0) {
+                // User typed a duration - use it as-is
+                this.addTask(taskText);
+            } else if (this.selectedDuration) {
+                // No typed duration, but pill selected - append pill duration
+                const durationSuffix = this.selectedDuration >= 60 
+                    ? ` ${this.selectedDuration / 60}h` 
+                    : ` ${this.selectedDuration}m`;
+                this.addTask(taskText + durationSuffix);
+            } else {
+                // No duration at all
+                this.addTask(taskText);
+            }
             this.hideAddTaskModal();
         }
     }

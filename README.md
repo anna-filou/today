@@ -82,6 +82,38 @@ When you make changes to the code, you **must** update the version number in 3 p
 ### Settings & Time Picker
 - **Custom Time Picker**: 24-hour grid interface for setting daily reset time, works across all devices
 
+### Development Best Practices
+
+#### Mobile Event Handlers
+**CRITICAL**: Whenever adding click event listeners for desktop interactions, you MUST also add corresponding touch event listeners for mobile devices.
+
+**Pattern to follow:**
+```javascript
+// Desktop
+element.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleAction();
+});
+
+// Mobile
+element.addEventListener('touchend', (e) => {
+    e.preventDefault(); // Prevent click event from also firing
+    e.stopPropagation();
+    handleAction();
+}, { passive: false });
+```
+
+**Why this matters:**
+- Click events work on desktop but are unreliable on mobile browsers
+- Touch events (`touchend`) are required for reliable mobile interaction
+- Without `preventDefault()`, both touch and click events may fire (double-trigger)
+- Must use `{ passive: false }` to allow `preventDefault()`
+
+**Examples in codebase:**
+- Duration pill selection (`.duration-pill`)
+- Submit button in add task overlay (`#addTaskSubmit`)
+- Any interactive UI element that requires immediate response
+
 ### Custom CSS Implementations
 - **Dashed Borders**: Uses `repeating-linear-gradient` backgrounds for precise control over dash/gap spacing (2px dash + 5px gap)
 - **Dynamic Viewport Height**: Uses `100dvh` instead of `100vh` for proper mobile browser support

@@ -12,8 +12,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.0.17">
-    <script src="app.js?v=1.0.17" defer></script>
+    <link rel="stylesheet" href="styles.css?v=1.0.18">
+    <script src="app.js?v=1.0.18" defer></script>
 </head>
 <body>
     <div class="container">
@@ -91,7 +91,7 @@
                 <button class="clear-all-btn" id="clearAllTasks">Clear All Tasks</button>
             </div>
             <div class="setting-item version-item">
-                <span class="version-label">Version 1.0.17</span>
+                <span class="version-label">Version 1.0.18</span>
             </div>
         </div>
     </div>
@@ -132,19 +132,29 @@
     
     <!-- Add Task Overlay -->
     <div class="add-task-overlay" id="addTaskOverlay">
-        <div class="add-task-row">
-            <div class="add-task-input-area">
-                <div class="add-task-checkbox"></div>
-                <input type="text" name="taskNameField" class="add-task-input" id="addTaskInput" placeholder="Task name + duration (m/h)" autocomplete="off" aria-autocomplete="none" inputmode="text" autocapitalize="sentences" spellcheck="true">
+        <div class="add-task-container">
+            <div class="add-task-row">
+                <div class="add-task-input-area">
+                    <div class="add-task-checkbox"></div>
+                    <input type="text" name="taskNameField" class="add-task-input" id="addTaskInput" placeholder="'Workout 1h' or 'Call mom 10m'" autocomplete="off" aria-autocomplete="none" inputmode="text" autocapitalize="sentences" spellcheck="true">
+                </div>
+                <div class="add-task-button-area">
+                    <button class="add-task-submit" id="addTaskSubmit">
+                        <div class="add-task-submit-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                                <path fill-rule="evenodd" d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </button>
+                </div>
             </div>
-            <div class="add-task-button-area">
-                <button class="add-task-submit" id="addTaskSubmit">
-                    <div class="add-task-submit-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
-                            <path fill-rule="evenodd" d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                </button>
+            <div class="duration-pills-container">
+                <button class="duration-pill" data-minutes="5">5m</button>
+                <button class="duration-pill" data-minutes="15">15m</button>
+                <button class="duration-pill" data-minutes="30">30m</button>
+                <button class="duration-pill" data-minutes="60">1h</button>
+                <button class="duration-pill" data-minutes="120">2h</button>
+                <button class="duration-pill" data-minutes="180">3h</button>
             </div>
         </div>
     </div>
