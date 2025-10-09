@@ -16,13 +16,18 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-.app {
-    height: 100vh; /* Fallback for older browsers */
-    height: 100dvh; /* Dynamic viewport height - adjusts for URL bar on mobile */
-    display: flex;
-    flex-direction: column;
+.container {
     max-width: 600px;
     margin: 0 auto;
+    position: relative;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Dynamic viewport height - adjusts for URL bar on mobile */
+}
+
+.app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     position: relative;
 }
 
@@ -39,8 +44,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 600px;
-    margin: 0 auto;
 }
 
 .header-content.centered {
@@ -131,7 +134,7 @@ body {
 }
 
 .input-container {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
@@ -139,8 +142,6 @@ body {
     padding: 20px;
     border-top: 1px solid #333;
     z-index: 10;
-    max-width: 600px;
-    margin: 0 auto;
 }
 
 #taskInput {
@@ -324,7 +325,7 @@ body {
 
 .modal {
     display: none;
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -621,7 +622,7 @@ body {
 
 /* Add Task Overlay */
 .add-task-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
@@ -633,8 +634,7 @@ body {
     justify-content: center;
     padding-bottom: env(safe-area-inset-bottom);
     /* Prevent viewport changes when keyboard appears */
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for mobile */
+    height: 100%;
     overflow: hidden;
     /* Prevent any scrolling within the overlay */
     touch-action: none;
@@ -738,7 +738,7 @@ body {
 
 /* Toast Notification */
 .toast {
-    position: fixed;
+    position: absolute;
     bottom: calc(var(--bottom-nav-height, 100px) + 16px + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
@@ -866,7 +866,7 @@ body {
 
 /* Add Task Prompt */
 .add-task-prompt {
-    position: fixed;
+    position: absolute;
     bottom: calc(100px + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
@@ -892,7 +892,7 @@ body {
 
 /* Bottom Navigation */
 .bottom-nav {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
@@ -902,8 +902,6 @@ body {
     justify-content: space-between;
     align-items: flex-end;
     z-index: 100;
-    max-width: 600px;
-    margin: 0 auto;
 }
 
 .nav-btn {
@@ -980,7 +978,7 @@ body {
 
 /* Update Notification */
 .update-notification {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
@@ -996,8 +994,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 600px;
-    margin: 0 auto;
 }
 
 .update-content span {

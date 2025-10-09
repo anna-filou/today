@@ -411,20 +411,21 @@ class TodayTodo {
     
     getSortedTasks() {
         if (this.sortMode === 'duration') {
-            // Sort by duration: longest first, tasks without duration at the bottom
+            // Sort by duration: longest first, completed tasks and tasks without duration at the bottom
             return [...this.tasks].sort((a, b) => {
-                const aDuration = a.duration || 0;
-                const bDuration = b.duration || 0;
+                // Treat completed tasks as having 0 duration
+                const aDuration = a.completed ? 0 : (a.duration || 0);
+                const bDuration = b.completed ? 0 : (b.duration || 0);
                 
-                // If both have no duration, keep original order
+                // If both have no duration (or are completed), keep original order
                 if (aDuration === 0 && bDuration === 0) {
                     return 0;
                 }
-                // If only a has no duration, put it after b
+                // If only a has no duration (or is completed), put it after b
                 if (aDuration === 0) {
                     return 1;
                 }
-                // If only b has no duration, put it after a
+                // If only b has no duration (or is completed), put it after a
                 if (bDuration === 0) {
                     return -1;
                 }
