@@ -471,8 +471,12 @@ class TodayTodo {
                 const aDuration = a.completed ? 0 : (a.duration || 0);
                 const bDuration = b.completed ? 0 : (b.duration || 0);
                 
-                // If both have no duration (or are completed), keep original order
+                // If both have no duration, prioritize incomplete tasks
                 if (aDuration === 0 && bDuration === 0) {
+                    // If one is completed and one isn't, put completed one after
+                    if (a.completed && !b.completed) return 1;
+                    if (!a.completed && b.completed) return -1;
+                    // If both have same completion status, keep original order
                     return 0;
                 }
                 // If only a has no duration (or is completed), put it after b
@@ -1031,7 +1035,8 @@ class TodayTodo {
         let hasMovedEnough = false; // Track if user has swiped enough to be considered a swipe
         const swipeThreshold = 100; // pixels to trigger delete
         const moveThreshold = 15; // minimum movement to be considered a swipe (not a tap)
-        const deleteIndicator = element.querySelector('.delete-indicator');
+        const deleteBackground = element.querySelector('.delete-background');
+        const taskContent = element.querySelector('.task-content');
         
         element.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
@@ -1050,17 +1055,14 @@ class TodayTodo {
             if (Math.abs(diffX) > moveThreshold) {
                 hasMovedEnough = true;
                 element.classList.add('swiping');
-                deleteIndicator.textContent = 'Swipe to delete';
                 e.preventDefault(); // Prevent scrolling when swiping
-                element.style.transform = `translateX(${diffX}px)`;
+                taskContent.style.transform = `translateX(${diffX}px)`;
                 
                 // Change indicator when threshold is reached
                 if (Math.abs(diffX) > swipeThreshold) {
                     element.classList.add('delete-threshold');
-                    deleteIndicator.textContent = 'Delete';
                 } else {
                     element.classList.remove('delete-threshold');
-                    deleteIndicator.textContent = 'Swipe to delete';
                 }
             }
         });
@@ -1077,7 +1079,7 @@ class TodayTodo {
             if (hasMovedEnough && Math.abs(diffX) > swipeThreshold) {
                 // Animate off screen
                 const direction = diffX > 0 ? 1 : -1;
-                element.style.transform = `translateX(${direction * window.innerWidth}px)`;
+                taskContent.style.transform = `translateX(${direction * window.innerWidth}px)`;
                 
                 // Delete task after animation
                 setTimeout(() => {
@@ -1085,7 +1087,7 @@ class TodayTodo {
                 }, 300);
             } else {
                 // Snap back to original position
-                element.style.transform = 'translateX(0)';
+                taskContent.style.transform = 'translateX(0)';
             }
             
             isSwiping = false;
@@ -1096,7 +1098,7 @@ class TodayTodo {
         element.addEventListener('touchcancel', () => {
             element.classList.remove('swiping');
             element.classList.remove('delete-threshold');
-            element.style.transform = 'translateX(0)';
+            taskContent.style.transform = 'translateX(0)';
             isSwiping = false;
             startX = 0;
             currentX = 0;
@@ -1115,11 +1117,15 @@ class TodayTodo {
             li.className = `task-item ${!task.text && task.duration && task.duration > 0 ? 'no-name' : ''}`;
             li.dataset.taskId = task.id;
             
-            // Add delete indicator
-            const deleteIndicator = document.createElement('div');
-            deleteIndicator.className = 'delete-indicator';
-            deleteIndicator.textContent = 'Delete';
-            li.appendChild(deleteIndicator);
+            // Add delete background layer
+            const deleteBackground = document.createElement('div');
+            deleteBackground.className = 'delete-background';
+            deleteBackground.textContent = 'Delete';
+            li.appendChild(deleteBackground);
+            
+            // Add task content layer
+            const taskContent = document.createElement('div');
+            taskContent.className = 'task-content';
             
             const checkbox = document.createElement('div');
             checkbox.className = `task-checkbox ${task.completed ? 'checked' : ''}`;
@@ -1136,11 +1142,15 @@ class TodayTodo {
             durationSpan.textContent = this.formatDuration(task.duration);
             }
             
-            li.appendChild(checkbox);
-            li.appendChild(textSpan);
+            // Add elements to task content
+            taskContent.appendChild(checkbox);
+            taskContent.appendChild(textSpan);
             if (durationSpan) {
-            li.appendChild(durationSpan);
+                taskContent.appendChild(durationSpan);
             }
+            
+            // Add task content to the list item
+            li.appendChild(taskContent);
             
             // Single click listener for task editing - works for all cases
             li.addEventListener('click', (e) => {
