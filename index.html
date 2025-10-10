@@ -96,6 +96,10 @@
                     <span class="toggle-value">No</span>
                 </button>
             </div>
+            <div class="setting-item setting-link" id="aboutBtn">
+                <span class="setting-label">About</span>
+                <span class="setting-arrow">›</span>
+            </div>
             <div class="setting-item">
                 <button class="clear-all-btn" id="clearAllTasks">Clear All Tasks</button>
             </div>
@@ -135,6 +139,26 @@
                 <div class="new-day-actions">
                     <button class="clear-today-btn" id="clearTodayBtn">Clear and <strong>Start Today →</strong></button>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Onboarding Modal -->
+    <div class="modal" id="onboardingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Welcome</h2>
+                <button class="close-button" id="onboardingClose">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="onboarding-text">Today's goal is to help you focus on what's truly important.</p>
+                <p class="onboarding-text">Unfinished tasks don't carry over to the next day. Instead, you get to see a list of tasks you didn't finish the previous one.</p>
+                <p class="onboarding-text">If any of them still matter, <strong>you'll need to re-add them from memory.</strong></p>
+                <hr class="modal-divider">
+                <p class="onboarding-text">By bringing intentional friction from the physical world, Today encourages you to rethink priorities and focus on the tasks that matter.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="onboarding-btn" id="onboardingGotIt">Got it</button>
             </div>
         </div>
     </div>

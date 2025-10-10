@@ -395,6 +395,20 @@ body {
     text-align: left;
 }
 
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    padding: 0 24px 24px 24px;
+}
+
+.modal-divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 20px 0;
+}
+
 .clear-button {
     width: 100%;
     padding: 16px;
@@ -438,7 +452,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px 24px 24px;
+    padding: 20px 24px;
 }
 
 .setting-label {
@@ -508,6 +522,21 @@ body {
 
 .setting-item:not(:last-child) {
     border-bottom: 1px solid #333;
+}
+
+.setting-link {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.setting-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.setting-arrow {
+    font-size: 1.5rem;
+    color: #666;
+    font-weight: 300;
 }
 
 .version-item {
@@ -662,6 +691,43 @@ body {
 
 .clear-today-btn:active {
     background-color: #e0e0e0;
+}
+
+/* Onboarding Modal */
+.onboarding-text {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #ffffff;
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+    opacity: 0.9;
+}
+
+.onboarding-text:last-child {
+    margin-bottom: 0;
+}
+
+.onboarding-btn {
+    width: 100%;
+    background-color: #222;
+    color: #ffffff;
+    border: none;
+    border-radius: 1000px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 14px 24px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.onboarding-btn:hover {
+    background-color: #333;
+}
+
+.onboarding-btn:active {
+    background-color: #444;
 }
 
 /* Add Task Overlay */

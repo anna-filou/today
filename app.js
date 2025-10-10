@@ -21,6 +21,7 @@ class TodayTodo {
         this.checkDailyReset();
         this.setupEventListeners();
         this.updateUI();
+        this.checkOnboarding();
         this.registerServiceWorker();
         
         // Check for daily reset and update progress every minute
@@ -277,6 +278,22 @@ class TodayTodo {
         
         document.getElementById('closeSettings').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.remove('show');
+        });
+        
+        // About button in settings
+        document.getElementById('aboutBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.remove('show');
+            this.showOnboarding();
+        });
+        
+        // Onboarding close button
+        document.getElementById('onboardingClose').addEventListener('click', () => {
+            this.closeOnboarding();
+        });
+        
+        // Onboarding "Got it" button
+        document.getElementById('onboardingGotIt').addEventListener('click', () => {
+            this.closeOnboarding();
         });
         
         // Round duration toggle
@@ -1197,6 +1214,22 @@ class TodayTodo {
                 notification.remove();
             }
         }, 10000);
+    }
+    
+    checkOnboarding() {
+        const hasSeenOnboarding = localStorage.getItem('todayTodo_hasSeenOnboarding');
+        if (!hasSeenOnboarding) {
+            this.showOnboarding();
+        }
+    }
+    
+    showOnboarding() {
+        document.getElementById('onboardingModal').classList.add('show');
+    }
+    
+    closeOnboarding() {
+        document.getElementById('onboardingModal').classList.remove('show');
+        localStorage.setItem('todayTodo_hasSeenOnboarding', 'true');
     }
 }
 
