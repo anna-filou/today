@@ -1,4 +1,4 @@
-const VERSION = '1.0.20';
+const VERSION = '1.1.0';
 const CACHE_NAME = `today-todo-v${VERSION}`;
 const urlsToCache = [
     '/today/',
