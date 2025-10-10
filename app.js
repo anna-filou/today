@@ -5,7 +5,7 @@ class TodayTodo {
             resetTime: '04:00',
             roundDuration: false
         };
-        this.lastVisitDate = null;
+        this.lastResetTime = new Date();
         this.sortMode = 'creation'; // 'creation' or 'duration'
         this.currentEditingTaskId = null;
         this.longPressTriggered = false; // Track if settings button long press triggered
@@ -44,52 +44,42 @@ class TodayTodo {
             this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
         }
         
-        // Load last visit date
-        const savedLastVisit = localStorage.getItem('todayTodo_lastVisit');
-        if (savedLastVisit) {
-            this.lastVisitDate = new Date(savedLastVisit);
+        // Load last reset time
+        const savedLastReset = localStorage.getItem('todayTodo_lastReset');
+        if (savedLastReset) {
+            this.lastResetTime = new Date(savedLastReset);
         }
     }
     
     saveData() {
         localStorage.setItem('todayTodo_tasks', JSON.stringify(this.tasks));
         localStorage.setItem('todayTodo_settings', JSON.stringify(this.settings));
-        localStorage.setItem('todayTodo_lastVisit', new Date().toISOString());
+        localStorage.setItem('todayTodo_lastReset', this.lastResetTime.toISOString());
     }
     
     checkDailyReset() {
         const now = new Date();
-        
-        if (!this.lastVisitDate) {
-            // First visit ever, just save the current time
-            this.lastVisitDate = now;
-            this.saveData();
-            return;
-        }
         
         // Parse reset time from settings
         const resetTime = this.settings.resetTime.split(':');
         const resetHour = parseInt(resetTime[0]);
         const resetMinute = parseInt(resetTime[1]);
         
-        // Calculate the most recent reset time
-        // This is the reset time for today, or yesterday if we haven't reached it yet today
-        const todayReset = new Date(now);
-        todayReset.setHours(resetHour, resetMinute, 0, 0);
+        // Calculate the next reset time based on current time
+        const nextReset = new Date(now);
+        nextReset.setHours(resetHour, resetMinute, 0, 0);
         
-        // If current time is before today's reset time, the last reset was yesterday
-        const lastReset = now < todayReset 
-            ? new Date(todayReset.getTime() - 24 * 60 * 60 * 1000) // Yesterday's reset
-            : todayReset; // Today's reset
-        
-        // Check if we've crossed a reset boundary since last visit
-        if (this.lastVisitDate < lastReset && now >= lastReset) {
-            this.showResetModal();
+        // If the reset time has already passed today, it's tomorrow's reset
+        if (now >= nextReset) {
+            nextReset.setDate(nextReset.getDate() + 1);
         }
         
-        // Update last visit time
-        this.lastVisitDate = now;
-        this.saveData();
+        // Check if we've crossed a reset boundary since last reset
+        if (now >= nextReset && this.lastResetTime < nextReset) {
+            this.showResetModal();
+            this.lastResetTime = now; // Update last reset time
+            this.saveData();
+        }
     }
     
     showResetModal() {
@@ -132,6 +122,7 @@ class TodayTodo {
     
     clearAndStartToday() {
         this.tasks = [];
+        this.lastResetTime = new Date(); // Update last reset time
         this.saveData();
         document.getElementById('newDayModal').classList.remove('show');
         this.updateUI();
