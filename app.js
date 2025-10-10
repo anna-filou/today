@@ -61,10 +61,10 @@ class TodayTodo {
         const now = new Date();
         
         // Parse reset time from settings
-        const resetTime = this.settings.resetTime.split(':');
-        const resetHour = parseInt(resetTime[0]);
-        const resetMinute = parseInt(resetTime[1]);
-        
+                const resetTime = this.settings.resetTime.split(':');
+                const resetHour = parseInt(resetTime[0]);
+                const resetMinute = parseInt(resetTime[1]);
+                
         // Calculate the next reset time based on current time
         const nextReset = new Date(now);
         nextReset.setHours(resetHour, resetMinute, 0, 0);
@@ -339,7 +339,7 @@ class TodayTodo {
             this.longPressTriggered = false;
             longPressTimer = setTimeout(() => {
                 this.longPressTriggered = true;
-                this.simulateNextDay();
+            this.simulateNextDay();
                 console.log('Next day simulated via long press on settings button');
             }, 1000); // 1 second long press
         });
@@ -517,12 +517,12 @@ class TodayTodo {
         input.value = task.text || '';
         
         // Set selected duration based on task's current duration
-        this.selectedDuration = task.duration || null;
+        this.selectedDuration = (task.duration !== undefined && task.duration !== null) ? task.duration : null;
         
         // Update pill UI to match task's duration
         document.querySelectorAll('.duration-pill').forEach(pill => {
             const pillMinutes = parseInt(pill.dataset.minutes);
-            if (task.duration && pillMinutes === task.duration) {
+            if (task.duration !== undefined && task.duration !== null && pillMinutes === task.duration) {
                 pill.classList.add('selected');
             } else {
                 pill.classList.remove('selected');
@@ -659,12 +659,12 @@ class TodayTodo {
         }
         
         // Always show remaining time (even when 0:00)
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
         
         const prefix = isRounded ? '~ ' : '';
-        
-        if (hours > 0) {
+            
+            if (hours > 0) {
             remainingTimeElement.textContent = `${prefix}${hours}:${minutes.toString().padStart(2, '0')}`;
         } else {
             remainingTimeElement.textContent = `${prefix}0:${minutes.toString().padStart(2, '0')}`;
@@ -842,8 +842,8 @@ class TodayTodo {
                 if (extractedDuration > 0) {
                     // User typed a duration - always use it
                     task.duration = extractedDuration;
-                } else if (this.selectedDuration) {
-                    // No typed duration, but pill selected - use pill
+                } else if (this.selectedDuration !== null) {
+                    // No typed duration, but pill selected - use pill (including 0 to remove duration)
                     task.duration = this.selectedDuration;
                 }
                 // If no typed duration and no pill selected, keep existing task.duration unchanged
@@ -859,12 +859,18 @@ class TodayTodo {
             if (extractedDuration > 0) {
                 // User typed a duration - use it as-is
                 this.addTask(taskText);
-            } else if (this.selectedDuration) {
-                // No typed duration, but pill selected - append pill duration
-                const durationSuffix = this.selectedDuration >= 60 
-                    ? ` ${this.selectedDuration / 60}h` 
-                    : ` ${this.selectedDuration}m`;
-                this.addTask(taskText + durationSuffix);
+            } else if (this.selectedDuration !== null) {
+                // No typed duration, but pill selected - append pill duration (including 0)
+                if (this.selectedDuration === 0) {
+                    // 0 duration - just add the task without duration
+                    this.addTask(taskText);
+                } else {
+                    // Non-zero duration - append duration suffix
+                    const durationSuffix = this.selectedDuration >= 60 
+                        ? ` ${this.selectedDuration / 60}h` 
+                        : ` ${this.selectedDuration}m`;
+                    this.addTask(taskText + durationSuffix);
+                }
             } else {
                 // No duration at all
                 this.addTask(taskText);
@@ -1104,13 +1110,13 @@ class TodayTodo {
             if (task.duration && task.duration > 0) {
                 durationSpan = document.createElement('span');
                 durationSpan.className = `task-duration ${task.completed ? 'completed' : ''}`;
-                durationSpan.textContent = this.formatDuration(task.duration);
+            durationSpan.textContent = this.formatDuration(task.duration);
             }
             
             li.appendChild(checkbox);
             li.appendChild(textSpan);
             if (durationSpan) {
-                li.appendChild(durationSpan);
+            li.appendChild(durationSpan);
             }
             
             // Single click listener for task editing - works for all cases

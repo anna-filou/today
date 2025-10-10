@@ -16,6 +16,15 @@
     <script src="app.js?v=1.0.19" defer></script>
 </head>
 <body>
+    <noscript>
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; color: #fff; font-family: Inter, sans-serif; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; z-index: 9999;">
+            <div>
+                <h1 style="margin-bottom: 16px;">JavaScript Required</h1>
+                <p>Your browser doesn't seem to support JavaScript. The app can't work without it.</p>
+            </div>
+        </div>
+    </noscript>
+    
     <div class="container">
     <div class="app">
         <header class="header">
@@ -129,7 +138,7 @@
                 <h2>It's a new day ☀️</h2>
             </div>
             <div class="new-day-body">
-                <p class="new-day-description">Here are the tasks you didn't finish yesterday. Are they still important? If yes, add them back from memory.</p>
+                <p class="">Here are the tasks you didn't finish yesterday. Are they still important? If yes, add them back from memory.</p>
                 <div class="unfinished-tasks-wrapper">
                     <div class="unfinished-tasks" id="unfinishedTasks">
                         <!-- Unfinished tasks will be populated by JavaScript -->
@@ -182,6 +191,7 @@
                 </div>
             </div>
             <div class="duration-pills-container">
+                <button class="duration-pill" data-minutes="0">0</button>
                 <button class="duration-pill" data-minutes="5">5m</button>
                 <button class="duration-pill" data-minutes="15">15m</button>
                 <button class="duration-pill" data-minutes="30">30m</button>

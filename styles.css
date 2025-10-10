@@ -5,10 +5,13 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: #000000;
     color: #ffffff;
-    line-height: 1.6;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     user-select: none;
@@ -588,14 +591,7 @@ body {
 }
 
 .new-day-description {
-    font-family: 'Inter', sans-serif;
-    font-size: 1rem;
-    font-weight: 400;
-    color: #ffffff;
     opacity: 0.9;
-    margin: 0;
-    line-height: 1.5;
-    letter-spacing: -0.01em;
     flex-shrink: 0;
 }
 
@@ -854,7 +850,7 @@ body {
 /* Duration Pills */
 .duration-pills-container {
     width: 100%;
-    background-color: #1f1f1f;
+    background-color: #0f0f0f;
     padding: 12px 20px;
     display: flex;
     gap: 8px;
