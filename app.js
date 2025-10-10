@@ -495,9 +495,32 @@ class TodayTodo {
     toggleTask(id) {
         const task = this.tasks.find(t => t.id === id);
         if (task) {
+            const wasBeingCheckedOff = !task.completed;
             task.completed = !task.completed;
+            
             this.saveData();
             this.updateUI();
+            
+            // Add animation class if task is being checked off (after UI update)
+            if (wasBeingCheckedOff) {
+                setTimeout(() => {
+                    const taskElement = document.querySelector(`[data-task-id="${id}"]`);
+                    if (taskElement) {
+                        const checkbox = taskElement.querySelector('.task-checkbox');
+                        if (checkbox) {
+                            // Add animate class to both task item and checkbox
+                            taskElement.classList.add('animate');
+                            checkbox.classList.add('animate');
+                            
+                            // Remove animation classes after animation completes
+                            setTimeout(() => {
+                                taskElement.classList.remove('animate');
+                                checkbox.classList.remove('animate');
+                            }, 400);
+                        }
+                    }
+                }, 0);
+            }
         }
     }
     
