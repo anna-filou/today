@@ -3,7 +3,8 @@ class TodayTodo {
         this.tasks = [];
         this.settings = {
             resetTime: '04:00',
-            roundDuration: false
+            roundDuration: false,
+            sortMode: 'creation'
         };
         this.lastResetTime = new Date();
         this.sortMode = 'creation'; // 'creation' or 'duration'
@@ -43,6 +44,9 @@ class TodayTodo {
         if (savedSettings) {
             this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
         }
+        
+        // Load sort mode from settings
+        this.sortMode = this.settings.sortMode || 'creation';
         
         // Load last reset time
         const savedLastReset = localStorage.getItem('todayTodo_lastReset');
@@ -456,6 +460,8 @@ class TodayTodo {
     
     toggleSortMode() {
         this.sortMode = this.sortMode === 'creation' ? 'duration' : 'creation';
+        this.settings.sortMode = this.sortMode;
+        this.saveData();
         this.renderTasks();
         
         // Show toast notification
