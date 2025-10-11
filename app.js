@@ -1128,7 +1128,7 @@ class TodayTodo {
         let currentX = 0;
         let isSwiping = false;
         let hasMovedEnough = false; // Track if user has swiped enough to be considered a swipe
-        const swipeThreshold = 100; // pixels to trigger delete
+        const swipeThreshold = window.innerWidth * 0.5; // 50vw to trigger delete (increased to prevent accidental deletion)
         const moveThreshold = 15; // minimum movement to be considered a swipe (not a tap)
         const deleteBackground = element.querySelector('.delete-background');
         const taskContent = element.querySelector('.task-content');
@@ -1146,8 +1146,8 @@ class TodayTodo {
             currentX = e.touches[0].clientX;
             const diffX = currentX - startX;
             
-            // Only consider it a swipe if moved more than threshold
-            if (Math.abs(diffX) > moveThreshold) {
+            // Only allow left swipes (negative diffX) and ignore right swipes
+            if (diffX < 0 && Math.abs(diffX) > moveThreshold) {
                 hasMovedEnough = true;
                 element.classList.add('swiping');
                 e.preventDefault(); // Prevent scrolling when swiping
@@ -1168,21 +1168,21 @@ class TodayTodo {
             const diffX = currentX - startX;
             isSwiping = false;
             element.classList.remove('swiping');
-            element.classList.remove('delete-threshold');
             
-            // Only delete if user actually swiped (not just tapped)
-            if (hasMovedEnough && Math.abs(diffX) > swipeThreshold) {
-                // Animate off screen
-                const direction = diffX > 0 ? 1 : -1;
-                taskContent.style.transform = `translateX(${direction * window.innerWidth}px)`;
+            // Only delete if user actually swiped left (not just tapped)
+            if (hasMovedEnough && diffX < 0 && Math.abs(diffX) > swipeThreshold) {
+                // Keep red background during deletion animation
+                // Animate off screen to the left
+                taskContent.style.transform = `translateX(-${window.innerWidth}px)`;
                 
                 // Delete task after animation
                 setTimeout(() => {
                     this.deleteTask(taskId);
                 }, 300);
             } else {
-                // Snap back to original position
+                // Snap back to original position and remove red background
                 taskContent.style.transform = 'translateX(0)';
+                element.classList.remove('delete-threshold');
             }
             
             isSwiping = false;
