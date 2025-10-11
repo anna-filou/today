@@ -213,6 +213,21 @@ class TodayTodo {
             addTaskInput.focus();
         });
         
+        // Prevent Safari iOS autocomplete by setting additional attributes
+        addTaskInput.setAttribute('autocomplete', 'new-password');
+        addTaskInput.setAttribute('data-lpignore', 'true');
+        addTaskInput.setAttribute('data-form-type', 'other');
+        
+        // Clear any autocomplete suggestions on focus
+        addTaskInput.addEventListener('focus', () => {
+            // Temporarily clear autocomplete to prevent suggestions
+            const currentValue = addTaskInput.value;
+            addTaskInput.setAttribute('autocomplete', 'off');
+            setTimeout(() => {
+                addTaskInput.value = currentValue;
+            }, 0);
+        });
+        
         // Duration pills
         const durationPills = document.querySelectorAll('.duration-pill');
         durationPills.forEach(pill => {
@@ -853,15 +868,25 @@ class TodayTodo {
             const visibleTop = vv.offsetTop;
             const visibleBottom = vv.offsetTop + vv.height;
             
+            // More aggressive positioning for Safari iOS
             if (rect.top < visibleTop || rect.bottom > visibleBottom) {
-                element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                // Scroll the input to be in the visible area above the keyboard
+                const targetY = Math.max(visibleTop + 20, rect.top - 100);
+                element.scrollIntoView({ 
+                    block: 'center', 
+                    behavior: 'smooth',
+                    inline: 'nearest'
+                });
             }
         };
         
         const vv = window.visualViewport;
         if (vv) {
             // Listen for keyboard changes
-            const onVvChange = () => ensureIntoView();
+            const onVvChange = () => {
+                // Delay to allow keyboard to fully appear
+                setTimeout(ensureIntoView, 100);
+            };
             vv.addEventListener('resize', onVvChange);
             vv.addEventListener('scroll', onVvChange);
             
@@ -879,7 +904,8 @@ class TodayTodo {
         // Safari iOS requires immediate focus without delays
         try {
             element.focus({ preventScroll: true });
-            ensureIntoView();
+            // Delay the positioning to allow keyboard to appear
+            setTimeout(ensureIntoView, 300);
         } catch (e) {
             // Fallback for older browsers
             element.focus();
