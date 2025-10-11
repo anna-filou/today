@@ -60,9 +60,17 @@ input, textarea {
 
 .day-progress-fill {
     height: 100%;
-    background-color: #ffffff;
+    background: linear-gradient(to right, #9d4edd 0%, #9d4edd 100%);
     width: 0%;
     transition: width 1s ease;
+}
+
+.day-progress-fill.no-location {
+    background: #ffffff;
+}
+
+.day-progress-fill.with-location {
+    background: linear-gradient(to right, #9d4edd 0%, #9d4edd 100%);
 }
 
 .sunrise-indicator,

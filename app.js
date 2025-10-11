@@ -784,8 +784,84 @@ class TodayTodo {
         // Update progress bar width
         progressFill.style.width = `${percentage}%`;
         
+        // Determine if it's day or night and update color
+        this.updateProgressBarColor(now);
+        
         // Update sunrise and sunset indicator positions
         this.updateSunriseSunsetPositions();
+    }
+    
+    updateProgressBarColor(now) {
+        const progressFill = document.getElementById('dayProgressFill');
+        
+        // Check if we have location data
+        const hasLocation = this.settings.locationAccess && this.userLocation && typeof SunCalc !== 'undefined';
+        
+        if (!hasLocation) {
+            // No location data - use white
+            progressFill.classList.remove('with-location');
+            progressFill.classList.add('no-location');
+            progressFill.style.background = ''; // Clear any inline gradient styles
+            return;
+        }
+        
+        // We have location data - calculate day/night gradient
+        progressFill.classList.remove('no-location');
+        progressFill.classList.add('with-location');
+        
+        // Calculate current progress percentage (how much of the day has passed)
+        const totalMinutesInDay = 24 * 60; // 1440 minutes
+        const minutesPassed = now.getHours() * 60 + now.getMinutes();
+        const currentProgressPercent = (minutesPassed / totalMinutesInDay) * 100;
+        
+        // Get sunrise and sunset times
+        const times = SunCalc.getTimes(now, this.userLocation.lat, this.userLocation.lng);
+        const sunriseTime = times.sunrise;
+        const sunsetTime = times.sunset;
+        
+        // Calculate sunrise and sunset positions as percentages of the day
+        const sunriseHour = sunriseTime.getHours() + (sunriseTime.getMinutes() / 60);
+        const sunsetHour = sunsetTime.getHours() + (sunsetTime.getMinutes() / 60);
+        
+        const sunrisePercent = (sunriseHour / 24) * 100;
+        const sunsetPercent = (sunsetHour / 24) * 100;
+        
+        // Create gradient stops based on the current progress width
+        let gradientStops = [];
+        
+        if (sunsetPercent > sunrisePercent) {
+            // Normal day: sunrise < sunset
+            // Scale the percentages to the current progress width
+            const scaledSunrisePercent = (sunrisePercent / currentProgressPercent) * 100;
+            const scaledSunsetPercent = (sunsetPercent / currentProgressPercent) * 100;
+            
+            gradientStops = [
+                `#9d4edd 0%`,                           // Night from start
+                `#9d4edd ${Math.min(scaledSunrisePercent, 100)}%`,    // Night until sunrise
+                `#ffd700 ${Math.min(scaledSunrisePercent, 100)}%`,    // Day from sunrise
+                `#ffd700 ${Math.min(scaledSunsetPercent, 100)}%`,     // Day until sunset
+                `#9d4edd ${Math.min(scaledSunsetPercent, 100)}%`,     // Night from sunset
+                `#9d4edd 100%`                           // Night to end
+            ];
+        } else {
+            // Polar regions: sunset < sunrise (e.g., sunset at 11 PM, sunrise at 5 AM)
+            // Scale the percentages to the current progress width
+            const scaledSunsetPercent = (sunsetPercent / currentProgressPercent) * 100;
+            const scaledSunrisePercent = (sunrisePercent / currentProgressPercent) * 100;
+            
+            gradientStops = [
+                `#ffd700 0%`,                           // Day from start
+                `#ffd700 ${Math.min(scaledSunsetPercent, 100)}%`,     // Day until sunset
+                `#9d4edd ${Math.min(scaledSunsetPercent, 100)}%`,     // Night from sunset
+                `#9d4edd ${Math.min(scaledSunrisePercent, 100)}%`,    // Night until sunrise
+                `#ffd700 ${Math.min(scaledSunrisePercent, 100)}%`,    // Day from sunrise
+                `#ffd700 100%`                           // Day to end
+            ];
+        }
+        
+        // Apply the gradient
+        const gradient = `linear-gradient(to right, ${gradientStops.join(', ')})`;
+        progressFill.style.background = gradient;
     }
     
     getUserLocation() {
@@ -1210,6 +1286,7 @@ class TodayTodo {
             localStorage.removeItem('todayTodo_userLocation');
             this.updateLocationAccessDisplay();
             this.updateSunriseSunsetPositions(); // Hide indicators
+            this.updateProgressBarColor(new Date()); // Update progress bar color immediately
             this.saveData();
         }
     }
@@ -1233,12 +1310,14 @@ class TodayTodo {
                 
                 this.updateLocationAccessDisplay();
                 this.updateSunriseSunsetPositions();
+                this.updateProgressBarColor(new Date()); // Update progress bar color immediately
                 this.saveData();
             },
             (error) => {
                 alert('Location access denied. Sunrise/sunset indicators will be hidden.');
                 this.updateLocationAccessDisplay();
                 this.updateSunriseSunsetPositions(); // Hide indicators
+                this.updateProgressBarColor(new Date()); // Update progress bar color immediately
             },
             {
                 enableHighAccuracy: false,
