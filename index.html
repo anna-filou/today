@@ -12,9 +12,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.4">
+    <link rel="stylesheet" href="styles.css?v=1.2.5">
     <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
-    <script src="app.js?v=1.2.4" defer></script>
+    <script src="app.js?v=1.2.5" defer></script>
 </head>
 <body>
     <noscript>
@@ -144,7 +144,7 @@
                     <button class="clear-all-btn" id="clearAllTasks">Clear All Tasks</button>
                 </div>
                 <div class="setting-item version-item">
-                    <span class="version-label">Version 1.2.4</span>
+                    <span class="version-label">Version 1.2.5</span>
                 </div>
             </div>
         </div>
@@ -199,7 +199,22 @@
                 <p class="onboarding-text">By introducing intentional friction, Today encourages you to rethink priorities and focus on what matters.</p>
             </div>
             <div class="modal-footer">
-                <button class="onboarding-btn" id="onboardingGotIt">Got it</button>
+                <button class="onboarding-btn" id="onboardingGotIt">Watch video</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Video Modal -->
+    <div class="modal" id="videoModal">
+        <div class="modal-content video-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">How to use Today</h2>
+                <button class="close-button" id="videoClose">×</button>
+            </div>
+            <div class="video-container">
+                <div style="position: relative; padding-bottom: 222.73781902552204%; height: 0;">
+                    <iframe src="https://www.loom.com/embed/3e338740381a4849a1b5178a349699c8?sid=95c5ad34-f7c9-4c19-a62d-e33022d3d1f0" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>
             </div>
         </div>
     </div>

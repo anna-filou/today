@@ -838,6 +838,28 @@ input, textarea {
     background-color: #444;
 }
 
+/* Video Modal */
+.video-modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+.video-container {
+    flex: 1;
+    max-height: calc(90vh - 80px); /* Account for modal header */
+    overflow: hidden;
+}
+
+.video-container iframe {
+    border-radius: 8px;
+    width: 100%;
+    height: 100%;
+    max-height: calc(90vh - 80px); /* Account for modal header */
+}
+
 /* Add Task Overlay */
 .add-task-overlay {
     position: absolute;

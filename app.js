@@ -362,9 +362,15 @@ class TodayTodo {
             this.closeOnboarding();
         });
         
-        // Onboarding "Got it" button
+        // Onboarding "Watch video" button
         document.getElementById('onboardingGotIt').addEventListener('click', () => {
             this.closeOnboarding();
+            this.showVideoModal();
+        });
+        
+        // Video modal close button
+        document.getElementById('videoClose').addEventListener('click', () => {
+            this.closeVideoModal();
         });
         
         // Round duration toggle
@@ -1671,6 +1677,38 @@ class TodayTodo {
     closeOnboarding() {
         document.getElementById('onboardingModal').classList.remove('show');
         localStorage.setItem('todayTodo_hasSeenOnboarding', 'true');
+    }
+    
+    showVideoModal() {
+        document.getElementById('videoModal').classList.add('show');
+    }
+    
+    closeVideoModal() {
+        const modal = document.getElementById('videoModal');
+        modal.classList.remove('show');
+        
+        // Stop video playback by removing and re-adding the iframe
+        const videoContainer = modal.querySelector('.video-container');
+        const iframeWrapper = videoContainer.querySelector('div[style*="position: relative"]');
+        const iframe = iframeWrapper.querySelector('iframe');
+        const iframeSrc = iframe.src;
+        
+        // Remove iframe
+        iframe.remove();
+        
+        // Re-add iframe with same src (but it won't auto-play)
+        const newIframe = document.createElement('iframe');
+        newIframe.src = iframeSrc;
+        newIframe.frameBorder = "0";
+        newIframe.webkitallowfullscreen = true;
+        newIframe.mozallowfullscreen = true;
+        newIframe.allowFullscreen = true;
+        newIframe.style.position = "absolute";
+        newIframe.style.top = "0";
+        newIframe.style.left = "0";
+        newIframe.style.width = "100%";
+        newIframe.style.height = "100%";
+        iframeWrapper.appendChild(newIframe);
     }
 }
 
