@@ -231,22 +231,52 @@ class TodayTodo {
         // Duration pills
         const durationPills = document.querySelectorAll('.duration-pill');
         durationPills.forEach(pill => {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let hasMoved = false;
+            
             // Click event for desktop
             pill.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent closing overlay
                 this.selectDurationPill(parseInt(pill.dataset.minutes));
             });
             
-            // Touch event for mobile
+            // Touch start - track initial position
+            pill.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                hasMoved = false;
+            }, { passive: true });
+            
+            // Touch move - detect if user is dragging
+            pill.addEventListener('touchmove', (e) => {
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                const deltaX = Math.abs(currentX - touchStartX);
+                const deltaY = Math.abs(currentY - touchStartY);
+                
+                // If moved more than 10 pixels, consider it a drag/scroll
+                if (deltaX > 10 || deltaY > 10) {
+                    hasMoved = true;
+                }
+            }, { passive: true });
+            
+            // Touch end - only select if it wasn't a drag
             pill.addEventListener('touchend', (e) => {
-                e.preventDefault(); // Prevent click event from also firing
-                e.stopPropagation(); // Prevent closing overlay
-                this.selectDurationPill(parseInt(pill.dataset.minutes));
+                if (!hasMoved) {
+                    e.preventDefault(); // Prevent click event from also firing
+                    e.stopPropagation(); // Prevent closing overlay
+                    this.selectDurationPill(parseInt(pill.dataset.minutes));
+                }
             }, { passive: false });
         });
         
         // Click/touch outside input area to close
         addTaskOverlay.addEventListener('click', (e) => {
+            // Don't close if clicking duration pills or their container
+            if (e.target.closest('.duration-pills-container') || e.target.closest('.duration-pill')) {
+                return;
+            }
             // Close if clicking on overlay background or outside the container
             if (e.target === addTaskOverlay || !e.target.closest('.add-task-container')) {
                 this.hideAddTaskModal();
@@ -257,6 +287,10 @@ class TodayTodo {
         addTaskOverlay.addEventListener('touchstart', (e) => {
             // Don't interfere with input field touch handling
             if (e.target.closest('input')) {
+                return;
+            }
+            // Don't close if touching duration pills or their container
+            if (e.target.closest('.duration-pills-container') || e.target.closest('.duration-pill')) {
                 return;
             }
             // Close if touching overlay background or outside the container
@@ -273,10 +307,12 @@ class TodayTodo {
             if (e.target.closest('input')) {
                 return;
             }
-            // Allow scrolling if touching the pills container
-            if (!e.target.closest('.duration-pills-container')) {
-                e.preventDefault();
+            // Don't interfere with duration pills touch handling
+            if (e.target.closest('.duration-pills-container') || e.target.closest('.duration-pill')) {
+                return;
             }
+            // Prevent scrolling for other areas
+            e.preventDefault();
         }, { passive: false });
         
         addTaskOverlay.addEventListener('wheel', (e) => {
@@ -296,9 +332,15 @@ class TodayTodo {
         
         addTaskOverlay.addEventListener('touchend', (e) => {
             // Don't prevent default for input fields - let them handle cursor positioning
-            if (!e.target.closest('input')) {
-                e.preventDefault();
+            if (e.target.closest('input')) {
+                return;
             }
+            // Don't prevent default for duration pills - let them handle touch events
+            if (e.target.closest('.duration-pills-container') || e.target.closest('.duration-pill')) {
+                return;
+            }
+            // Prevent default for other areas
+            e.preventDefault();
         }, { passive: false });
         
         // Sort button - toggle between creation and duration sorting
