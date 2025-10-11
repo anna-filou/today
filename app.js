@@ -391,6 +391,11 @@ class TodayTodo {
             this.toggleLocationAccess();
         });
         
+        // Sort mode toggle
+        document.getElementById('sortModeToggle').addEventListener('click', () => {
+            this.toggleSortMode();
+        });
+        
         // Toggle rounding by tapping the remaining time in header
         const remainingTimeElement = document.getElementById('remainingTime');
         
@@ -489,6 +494,7 @@ class TodayTodo {
         this.updateTimeDisplay();
         this.updateRoundDurationDisplay();
         this.updateLocationAccessDisplay();
+        this.updateSortModeDisplay();
     }
     
     addTask(text) {
@@ -560,6 +566,7 @@ class TodayTodo {
         this.settings.sortMode = this.sortMode;
         this.saveData();
         this.renderTasks();
+        this.updateSortModeDisplay();
         
         // Show toast notification
         const message = this.sortMode === 'duration' ? 'Sorted by duration' : 'Sorted by creation';
@@ -1177,6 +1184,12 @@ class TodayTodo {
         } else {
             toggleValue.textContent = 'No';
         }
+    }
+    
+    updateSortModeDisplay() {
+        const toggleBtn = document.getElementById('sortModeToggle');
+        const toggleValue = toggleBtn.querySelector('.toggle-value');
+        toggleValue.textContent = this.sortMode === 'creation' ? 'Creation' : 'Duration';
     }
     
     toggleRoundDuration() {

@@ -19,6 +19,9 @@ A minimal, phone-optimized todo app that enforces daily focus by resetting each 
 - Automatically detects time estimates in task names (1h, 30min, 2h30m, etc.)
 - Shows total remaining time for unfinished tasks in the header
 - Duration text appears in darker color within task names
+- **Duration Pills**: Quick-select buttons (5m, 15m, 30m, 1h, 2h, 3h, 0) for fast task creation
+- **Auto-submit**: Selecting a duration pill with existing text immediately creates the task
+- **Round Duration**: Optional feature to round total time up to nearest 30-minute increment
 
 **🔄 Daily Reset Philosophy:**
 - Automatic reset at customizable time (default 4 AM, configurable in settings)
@@ -32,6 +35,8 @@ A minimal, phone-optimized todo app that enforces daily focus by resetting each 
 **📱 Design:**
 - Clean black interface optimized for phones
 - Fixed header showing day, date, and remaining time
+- **Day Progress Bar**: Visual indicator showing percentage of day elapsed
+- **Sunrise/Sunset Indicators**: Shows actual sunrise/sunset times using [SunCalc](https://github.com/mourner/suncalc) library (requires location permission)
 - Prominent empty state with philosophical messaging
 - Bottom navigation with pill-shaped buttons
 - OLED-friendly dark theme
@@ -81,6 +86,10 @@ When you make changes to the code, you **must** update the version number in 3 p
 
 ### Settings & Time Picker
 - **Custom Time Picker**: 24-hour grid interface for setting daily reset time, works across all devices
+- **Round Duration Toggle**: Optional feature to round total time up to nearest 30-minute increment
+- **Location Access**: Enables sunrise/sunset indicators in progress bar (uses [SunCalc](https://github.com/mourner/suncalc) library)
+- **Reset Countdown**: Shows time until next daily reset for debugging purposes
+- **Settings UI**: Toggle buttons show checkmarks when enabled (✓Yes vs No)
 
 ### Development Best Practices
 
@@ -120,9 +129,19 @@ element.addEventListener('touchend', (e) => {
   - **Why**: Chrome's URL bar causes `100vh` to include hidden space, creating unnecessary scrolling
   - **Solution**: `100dvh` dynamically adjusts based on URL bar visibility
   - **Result**: Task list only scrolls when content truly overflows, not because of viewport miscalculation
+- **Swipe-to-Delete**: Custom implementation with two-stage visual feedback (gray "Delete" background, red when threshold reached)
+  - **Gesture Detection**: 10-pixel threshold to differentiate taps from swipes
+  - **Direction Restriction**: Only left swipes trigger delete (right swipes ignored)
+  - **Visual Feedback**: Background color changes and extends full width as task slides away
 
 ### Toast Notifications
 - **User Feedback**: Small notifications appear above bottom navigation for task actions and sort mode changes
+- **Undo Functionality**: Swipe-to-delete includes 5-second undo option with "Undo" link
+
+### Task Animations
+- **Check Animation**: When marking tasks complete, checkbox bounces and fades from white to gray
+- **Bouncy Easing**: Uses `cubic-bezier(0.68, -0.55, 0.265, 1.55)` for natural bounce effect
+- **Color Transitions**: Smooth fade from white to gray for both checkbox and text
 
 ## Known Issues
 
@@ -146,13 +165,13 @@ element.addEventListener('touchend', (e) => {
   - **Impact**: Non-breaking - input is functional, but visual behavior differs from other browsers
 
 - **Keyboard Autocomplete Bar**: Chrome Android shows a QuickType/autofill bar above the keyboard with irrelevant suggestions (passwords, addresses, credit cards) even though the input is `type="text"` for task names.
-  - **Status**: ❌ **Unresolved** - Chrome completely ignores all mitigation attempts
-  - **Attempted Fixes** (all ineffective):
+  - **Status**: ✅ **User-Resolvable** - Can be resolved by changing autofill provider
+  - **Developer Fixes Attempted** (all ineffective):
     - `autocomplete="off"` - ignored
     - `aria-autocomplete="none"` - ignored
     - `inputmode="text"` - ignored
     - `autocapitalize="sentences"` - ignored
     - `name="taskNameField"` (generic, non-PII) - ignored
   - **Chrome Behavior**: Completely disregards developer preferences and HTML standards; uses its own "smart" heuristics to force autofill suggestions regardless of explicit opt-out attributes
-  - **Root Cause**: Chrome/Android IME has final control over autofill bar display; no HTML/CSS/JS solution exists without breaking accessibility
-  - **Impact**: Moderate UX issue - wastes screen space with irrelevant password/credit card suggestions on a task name field; cannot be suppressed without contenteditable workarounds that would break accessibility
+  - **User Solution**: Change autofill provider from Chrome to a password manager (e.g., Bitwarden, 1Password) which provides better control over autofill behavior
+  - **Impact**: Minor UX issue - can be resolved by using a different autofill provider
