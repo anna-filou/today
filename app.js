@@ -4,8 +4,10 @@ class TodayTodo {
         this.settings = {
             resetTime: '04:00',
             roundDuration: false,
-            sortMode: 'creation'
+            sortMode: 'creation',
+            locationAccess: false
         };
+        this.userLocation = null; // Will store {lat, lng} coordinates
         this.lastResetTime = new Date();
         this.sortMode = 'creation'; // 'creation' or 'duration'
         this.currentEditingTaskId = null;
@@ -34,6 +36,9 @@ class TodayTodo {
         
         // Initial countdown update
         this.updateResetCountdown();
+        
+        // Initial sunrise/sunset positions
+        this.getUserLocation();
     }
     
     loadData() {
@@ -57,6 +62,14 @@ class TodayTodo {
         if (savedLastReset) {
             this.lastResetTime = new Date(savedLastReset);
         }
+        
+        // Load cached location only if location access is enabled
+        if (this.settings.locationAccess) {
+            const cachedLocation = localStorage.getItem('todayTodo_userLocation');
+            if (cachedLocation) {
+                this.userLocation = JSON.parse(cachedLocation);
+            }
+        }
     }
     
     saveData() {
@@ -69,10 +82,10 @@ class TodayTodo {
         const now = new Date();
         
         // Parse reset time from settings
-        const resetTime = this.settings.resetTime.split(':');
-        const resetHour = parseInt(resetTime[0]);
-        const resetMinute = parseInt(resetTime[1]);
-        
+                const resetTime = this.settings.resetTime.split(':');
+                const resetHour = parseInt(resetTime[0]);
+                const resetMinute = parseInt(resetTime[1]);
+                
         // Calculate the last reset time that should have occurred based on current time
         let lastExpectedReset = new Date(now);
         lastExpectedReset.setHours(resetHour, resetMinute, 0, 0);
@@ -84,10 +97,10 @@ class TodayTodo {
         
         // Check if we've crossed a reset boundary since last actual reset
         if (this.lastResetTime < lastExpectedReset) {
-            this.showResetModal();
+                    this.showResetModal();
             this.lastResetTime = now; // Update last reset time
             this.saveData();
-        }
+            }
     }
     
     showResetModal() {
@@ -373,6 +386,11 @@ class TodayTodo {
             this.toggleRoundDuration();
         });
         
+        // Location access toggle
+        document.getElementById('locationAccessToggle').addEventListener('click', () => {
+            this.toggleLocationAccess();
+        });
+        
         // Toggle rounding by tapping the remaining time in header
         const remainingTimeElement = document.getElementById('remainingTime');
         
@@ -470,6 +488,7 @@ class TodayTodo {
         document.getElementById('resetTime').value = this.settings.resetTime;
         this.updateTimeDisplay();
         this.updateRoundDurationDisplay();
+        this.updateLocationAccessDisplay();
     }
     
     addTask(text) {
@@ -757,6 +776,94 @@ class TodayTodo {
         
         // Update progress bar width
         progressFill.style.width = `${percentage}%`;
+        
+        // Update sunrise and sunset indicator positions
+        this.updateSunriseSunsetPositions();
+    }
+    
+    getUserLocation() {
+        // Only request location if user has enabled location access
+        if (!this.settings.locationAccess) {
+            this.updateSunriseSunsetPositions();
+            return;
+        }
+        
+        // If we already have a location from loadData, use it
+        if (this.userLocation) {
+            this.updateSunriseSunsetPositions();
+            return;
+        }
+        
+        // Check if geolocation is supported
+        if (!navigator.geolocation) {
+            console.log('Geolocation not supported, using fallback times');
+            this.updateSunriseSunsetPositions();
+            return;
+        }
+        
+        // Request current location
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                this.userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                // Cache the location for future use
+                localStorage.setItem('todayTodo_userLocation', JSON.stringify(this.userLocation));
+                
+                // Update sunrise/sunset positions with real data
+                this.updateSunriseSunsetPositions();
+            },
+            (error) => {
+                console.log('Location access denied or failed:', error.message);
+                this.updateSunriseSunsetPositions();
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 24 * 60 * 60 * 1000 // Cache for 24 hours
+            }
+        );
+    }
+    
+    updateSunriseSunsetPositions() {
+        const sunriseIndicator = document.querySelector('.sunrise-indicator');
+        const sunsetIndicator = document.querySelector('.sunset-indicator');
+        
+        // Only show indicators if we have location access and user location
+        const shouldShowIndicators = this.settings.locationAccess && this.userLocation && typeof SunCalc !== 'undefined';
+        
+        if (shouldShowIndicators) {
+            // Use SunCalc to get real sunrise/sunset times
+            const now = new Date();
+            const times = SunCalc.getTimes(now, this.userLocation.lat, this.userLocation.lng);
+            
+            const sunriseHour = times.sunrise.getHours() + (times.sunrise.getMinutes() / 60);
+            const sunsetHour = times.sunset.getHours() + (times.sunset.getMinutes() / 60);
+            
+            // Calculate positions as percentages of the day
+            const sunrisePosition = (sunriseHour / 24) * 100;
+            const sunsetPosition = (sunsetHour / 24) * 100;
+            
+            // Show indicators and update positions
+            if (sunriseIndicator) {
+                sunriseIndicator.style.display = 'block';
+                sunriseIndicator.style.left = `${sunrisePosition}%`;
+            }
+            if (sunsetIndicator) {
+                sunsetIndicator.style.display = 'block';
+                sunsetIndicator.style.left = `${sunsetPosition}%`;
+            }
+        } else {
+            // Hide indicators when location is not available
+            if (sunriseIndicator) {
+                sunriseIndicator.style.display = 'none';
+            }
+            if (sunsetIndicator) {
+                sunsetIndicator.style.display = 'none';
+            }
+        }
     }
     
     updateResetCountdown() {
@@ -1053,7 +1160,23 @@ class TodayTodo {
     updateRoundDurationDisplay() {
         const toggleBtn = document.getElementById('roundDurationToggle');
         const toggleValue = toggleBtn.querySelector('.toggle-value');
-        toggleValue.textContent = this.settings.roundDuration ? 'Yes' : 'No';
+        
+        if (this.settings.roundDuration) {
+            toggleValue.innerHTML = '<span class="toggle-checkmark">✓</span>Yes';
+        } else {
+            toggleValue.textContent = 'No';
+        }
+    }
+    
+    updateLocationAccessDisplay() {
+        const toggleBtn = document.getElementById('locationAccessToggle');
+        const toggleValue = toggleBtn.querySelector('.toggle-value');
+        
+        if (this.settings.locationAccess) {
+            toggleValue.innerHTML = '<span class="toggle-checkmark">✓</span>Yes';
+        } else {
+            toggleValue.textContent = 'No';
+        }
     }
     
     toggleRoundDuration() {
@@ -1061,6 +1184,55 @@ class TodayTodo {
         this.updateRoundDurationDisplay();
         this.saveData();
         this.updateUI();
+    }
+    
+    toggleLocationAccess() {
+        if (!this.settings.locationAccess) {
+            // User wants to enable location access
+            this.requestLocationPermission();
+        } else {
+            // User wants to disable location access
+            this.settings.locationAccess = false;
+            this.userLocation = null;
+            localStorage.removeItem('todayTodo_userLocation');
+            this.updateLocationAccessDisplay();
+            this.updateSunriseSunsetPositions(); // Hide indicators
+            this.saveData();
+        }
+    }
+    
+    requestLocationPermission() {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by this browser.');
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                this.settings.locationAccess = true;
+                this.userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                // Cache the location
+                localStorage.setItem('todayTodo_userLocation', JSON.stringify(this.userLocation));
+                
+                this.updateLocationAccessDisplay();
+                this.updateSunriseSunsetPositions();
+                this.saveData();
+            },
+            (error) => {
+                alert('Location access denied. Sunrise/sunset indicators will be hidden.');
+                this.updateLocationAccessDisplay();
+                this.updateSunriseSunsetPositions(); // Hide indicators
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 24 * 60 * 60 * 1000
+            }
+        );
     }
     
     initializeTimePicker() {

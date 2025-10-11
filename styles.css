@@ -54,8 +54,8 @@ input, textarea {
     background-color: #333;
     position: sticky;
     top: calc(env(safe-area-inset-top) + 64px); /* Stick below header */
-    z-index: 9; /* Below header but above content */
-    overflow: hidden;
+    z-index: 100; /* High enough for indicators to be visible above content */
+    overflow: visible; /* Allow indicators to be visible */
 }
 
 .day-progress-fill {
@@ -63,6 +63,24 @@ input, textarea {
     background-color: #ffffff;
     width: 0%;
     transition: width 1s ease;
+}
+
+.sunrise-indicator,
+.sunset-indicator {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #000000;
+    padding: 4px;
+    border-radius: 2px;
+}
+
+.sunrise-indicator {
+    left: 25%; /* 6am = 6/24 = 25% of the day */
+}
+
+.sunset-indicator {
+    left: 79.17%; /* 7pm = 19/24 = 79.17% of the day */
 }
 
 .header-content {
@@ -510,6 +528,24 @@ input, textarea {
     font-size: 1rem;
     font-weight: 600;
     color: #888;
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.setting-subtitle {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* font-size: 0.875rem; */
+    font-weight: 400;
+    color: #888;
+}
+
+.toggle-checkmark {
+    margin-right: 6px;
+    font-weight: bold;
 }
 
 .time-display {
