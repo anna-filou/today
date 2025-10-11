@@ -27,6 +27,9 @@ class TodayTodo {
         this.checkOnboarding();
         this.registerServiceWorker();
         
+        // Fix PWA viewport height issues
+        this.fixPWAViewport();
+        
         // Check for daily reset and update progress every minute
         setInterval(() => {
             this.checkDailyReset();
@@ -39,6 +42,27 @@ class TodayTodo {
         
         // Initial sunrise/sunset positions
         this.getUserLocation();
+    }
+    
+    fixPWAViewport() {
+        // Fix viewport height issues in PWA standalone mode
+        const setViewportHeight = () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+        
+        // Set initial viewport height
+        setViewportHeight();
+        
+        // Recalculate on resize (handles orientation changes)
+        window.addEventListener('resize', setViewportHeight);
+        
+        // Recalculate on focus (handles PWA refresh issues)
+        window.addEventListener('focus', setViewportHeight);
+        
+        // Force recalculation after a short delay (handles PWA refresh)
+        setTimeout(setViewportHeight, 100);
+        setTimeout(setViewportHeight, 500);
     }
     
     loadData() {

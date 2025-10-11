@@ -30,7 +30,11 @@ input, textarea {
     margin: 0 auto;
     position: relative;
     height: 100vh; /* Fallback for older browsers */
+    height: calc(var(--vh, 1vh) * 100); /* Custom viewport height for PWA fixes */
     height: 100dvh; /* Dynamic viewport height - adjusts for URL bar on mobile */
+    /* PWA fixes */
+    height: 100svh; /* Small viewport height - more reliable for PWAs */
+    overflow: hidden; /* Prevent body from growing beyond viewport */
 }
 
 .app {
@@ -235,7 +239,7 @@ input, textarea {
     flex: 1;
     overflow-y: auto; /* Only scroll when content overflows */
     min-height: 0; /* Allow flex item to shrink */
-    padding-bottom: calc(120px + env(safe-area-inset-bottom)); /* ensure last item clears bottom nav gradient */
+    padding-bottom: calc(160px + env(safe-area-inset-bottom)); /* ensure last item clears bottom nav gradient */
     /* Prevent scrolling when content fits */
     overscroll-behavior: contain;
 }
@@ -650,7 +654,6 @@ input, textarea {
 }
 
 .setting-arrow {
-    font-size: 1.5rem;
     color: #666;
     font-weight: 300;
 }
@@ -810,12 +813,8 @@ input, textarea {
     font-weight: 400;
     color: #ffffff;
     line-height: 1.5;
-    margin: 0 0 16px 0;
+    margin: 16px 24px;
     opacity: 0.9;
-}
-
-.onboarding-text:last-child {
-    margin-bottom: 0;
 }
 
 .onboarding-btn {
@@ -1089,7 +1088,7 @@ input, textarea {
 .time-option {
     background-color: #333;
     border: none;
-    border-radius: 12px;
+    border-radius: 8px;
     color: #ffffff;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 1rem;
