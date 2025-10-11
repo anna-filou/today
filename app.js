@@ -337,48 +337,10 @@ class TodayTodo {
             }
         }, { passive: false });
         
-        // Prevent scrolling within the overlay - Chrome-specific fixes
-        // But allow scrolling within the duration pills container
-        addTaskOverlay.addEventListener('touchmove', (e) => {
-            // Don't interfere with input field touch handling
-            if (e.target.closest('input')) {
-                return;
-            }
-            // Don't interfere with duration pills touch handling
-            if (e.target.closest('.duration-pills-container') || e.target.closest('.duration-pill')) {
-                return;
-            }
-            // Prevent scrolling for other areas
-            e.preventDefault();
-        }, { passive: false });
+        // Allow normal scrolling within the overlay
+        // Chrome-specific fixes are handled by CSS overscroll-behavior
         
-        addTaskOverlay.addEventListener('wheel', (e) => {
-            e.preventDefault();
-        }, { passive: false });
-        
-        addTaskOverlay.addEventListener('scroll', (e) => {
-            e.preventDefault();
-        }, { passive: false });
-        
-        // Prevent Chrome's pull-to-refresh and overscroll
-        addTaskOverlay.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        addTaskOverlay.addEventListener('touchend', (e) => {
-            // Don't prevent default for input fields - let them handle cursor positioning
-            if (e.target.closest('input')) {
-                return;
-            }
-            // Don't prevent default for duration pills - let them handle touch events
-            if (e.target.closest('.duration-pills-container') || e.target.closest('.duration-pill')) {
-                return;
-            }
-            // Prevent default for other areas
-            e.preventDefault();
-        }, { passive: false });
+        // Allow normal touch interactions in overlay
         
         // Sort button - toggle between creation and duration sorting
         document.getElementById('sortBtn').addEventListener('click', () => {
@@ -1458,13 +1420,16 @@ class TodayTodo {
         let currentX = 0;
         let isSwiping = false;
         let hasMovedEnough = false; // Track if user has swiped enough to be considered a swipe
-        const swipeThreshold = window.innerWidth * 0.5; // 50vw to trigger delete (increased to prevent accidental deletion)
-        const moveThreshold = 15; // minimum movement to be considered a swipe (not a tap)
+        let startY = 0; // Track Y position to detect vertical scrolling
+        const swipeThreshold = window.innerWidth * 0.5; // 50vw to trigger delete
+        const moveThreshold = 30; // Minimum movement to be considered a swipe (reduced from 50)
+        const maxVerticalMovement = 50; // Maximum vertical movement allowed during horizontal swipe (increased from 30)
         const deleteBackground = element.querySelector('.delete-background');
         const taskContent = element.querySelector('.task-content');
         
         element.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
             currentX = startX;
             isSwiping = true;
             hasMovedEnough = false;
@@ -1474,13 +1439,23 @@ class TodayTodo {
             if (!isSwiping) return;
             
             currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
             const diffX = currentX - startX;
+            const diffY = currentY - startY;
             
-            // Only allow left swipes (negative diffX) and ignore right swipes
-            if (diffX < 0 && Math.abs(diffX) > moveThreshold) {
+            // Check if this is primarily a horizontal swipe (not vertical scrolling)
+            const isHorizontalSwipe = Math.abs(diffX) > Math.abs(diffY);
+            const isMinimalVerticalMovement = Math.abs(diffY) < maxVerticalMovement;
+            
+            // Only trigger swipe-to-delete if:
+            // 1. It's a left swipe (negative diffX)
+            // 2. Horizontal movement is greater than vertical (not scrolling)
+            // 3. Vertical movement is minimal
+            // 4. Horizontal movement exceeds the threshold
+            if (diffX < 0 && isHorizontalSwipe && isMinimalVerticalMovement && Math.abs(diffX) > moveThreshold) {
                 hasMovedEnough = true;
                 element.classList.add('swiping');
-                e.preventDefault(); // Prevent scrolling when swiping
+                
                 taskContent.style.transform = `translateX(${diffX}px)`;
                 
                 // Change indicator when threshold is reached
@@ -1489,6 +1464,12 @@ class TodayTodo {
                 } else {
                     element.classList.remove('delete-threshold');
                 }
+            } else if (Math.abs(diffY) > maxVerticalMovement && Math.abs(diffY) > Math.abs(diffX)) {
+                // If this is clearly vertical scrolling, reset the swipe state
+                isSwiping = false;
+                hasMovedEnough = false;
+                element.classList.remove('swiping');
+                taskContent.style.transform = '';
             }
         });
         
@@ -1647,8 +1628,13 @@ class TodayTodo {
         notification.className = 'update-notification';
         notification.innerHTML = `
             <div class="update-content">
-                <span>🔄 New version available!</span>
-                <button id="updateBtn" class="update-btn">Update Now</button>
+                <span>Update available!</span>
+                <button id="updateBtn" class="update-btn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.8359 2.47699C14.0349 2.47699 14.2256 2.55601 14.3663 2.69666C14.5069 2.83732 14.5859 3.02808 14.5859 3.22699V6.40899C14.5859 6.60791 14.5069 6.79867 14.3663 6.93932C14.2256 7.07998 14.0349 7.15899 13.8359 7.15899H10.6539C10.455 7.15899 10.2643 7.07998 10.1236 6.93932C9.98296 6.79867 9.90395 6.60791 9.90395 6.40899C9.90395 6.21008 9.98296 6.01932 10.1236 5.87866C10.2643 5.73801 10.455 5.65899 10.6539 5.65899H12.0239L11.1839 4.81799C10.6959 4.32974 10.102 3.96034 9.44829 3.73836C8.79457 3.51639 8.09856 3.4478 7.41409 3.5379C6.72963 3.628 6.07507 3.87438 5.50108 4.25797C4.92708 4.64155 4.44904 5.15206 4.10395 5.74999C4.00449 5.92238 3.84062 6.04821 3.6484 6.09978C3.45618 6.15135 3.25134 6.12445 3.07895 6.02499C2.90655 5.92554 2.78073 5.76167 2.72916 5.56945C2.67759 5.37722 2.70449 5.17238 2.80395 4.99999C3.26413 4.2028 3.90156 3.52218 4.66692 3.01079C5.43227 2.49941 6.30503 2.17097 7.21764 2.0509C8.13026 1.93083 9.05826 2.02234 9.92985 2.31836C10.8014 2.61438 11.5932 3.10696 12.2439 3.75799L13.0859 4.59799V3.22699C13.0859 3.02808 13.165 2.83732 13.3056 2.69666C13.4463 2.55601 13.637 2.47699 13.8359 2.47699ZM12.9249 9.97699C13.0967 10.0765 13.222 10.2401 13.2734 10.4319C13.3247 10.6236 13.298 10.8279 13.1989 11C12.7387 11.7971 12.1012 12.4776 11.3358 12.9889C10.5704 13.5002 9.6976 13.8286 8.78499 13.9485C7.87238 14.0685 6.94441 13.9769 6.07287 13.6808C5.20133 13.3847 4.4096 12.8921 3.75895 12.241L2.91895 11.401V12.772C2.91895 12.9709 2.83993 13.1617 2.69928 13.3023C2.55862 13.443 2.36786 13.522 2.16895 13.522C1.97003 13.522 1.77927 13.443 1.63862 13.3023C1.49796 13.1617 1.41895 12.9709 1.41895 12.772V9.59099C1.41895 9.39208 1.49796 9.20132 1.63862 9.06066C1.77927 8.92001 1.97003 8.84099 2.16895 8.84099H5.34995C5.54886 8.84099 5.73962 8.92001 5.88028 9.06066C6.02093 9.20132 6.09995 9.39208 6.09995 9.59099C6.09995 9.78991 6.02093 9.98067 5.88028 10.1213C5.73962 10.262 5.54886 10.341 5.34995 10.341H3.97995L4.82095 11.182C5.30902 11.6702 5.9029 12.0397 6.55661 12.2616C7.21032 12.4836 7.90633 12.5522 8.5908 12.4621C9.27526 12.372 9.92982 12.1256 10.5038 11.742C11.0778 11.3584 11.5559 10.8479 11.9009 10.25C11.9503 10.1648 12.016 10.0901 12.0942 10.0302C12.1725 9.97039 12.2617 9.92654 12.3569 9.90119C12.4521 9.87584 12.5513 9.86948 12.649 9.88249C12.7466 9.8955 12.8397 9.92761 12.9249 9.97699Z" fill="white"/>
+                    </svg>
+                    REFRESH
+                </button>
             </div>
         `;
         
