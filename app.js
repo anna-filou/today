@@ -29,7 +29,11 @@ class TodayTodo {
         setInterval(() => {
             this.checkDailyReset();
             this.updateDayProgress();
+            this.updateResetCountdown();
         }, 60000); // 60000ms = 1 minute
+        
+        // Initial countdown update
+        this.updateResetCountdown();
     }
     
     loadData() {
@@ -65,21 +69,21 @@ class TodayTodo {
         const now = new Date();
         
         // Parse reset time from settings
-                const resetTime = this.settings.resetTime.split(':');
-                const resetHour = parseInt(resetTime[0]);
-                const resetMinute = parseInt(resetTime[1]);
-                
-        // Calculate the next reset time based on current time
-        const nextReset = new Date(now);
-        nextReset.setHours(resetHour, resetMinute, 0, 0);
+        const resetTime = this.settings.resetTime.split(':');
+        const resetHour = parseInt(resetTime[0]);
+        const resetMinute = parseInt(resetTime[1]);
         
-        // If the reset time has already passed today, it's tomorrow's reset
-        if (now >= nextReset) {
-            nextReset.setDate(nextReset.getDate() + 1);
+        // Calculate the last reset time that should have occurred based on current time
+        let lastExpectedReset = new Date(now);
+        lastExpectedReset.setHours(resetHour, resetMinute, 0, 0);
+        
+        // If the reset time hasn't occurred yet today, the last reset was yesterday
+        if (now < lastExpectedReset) {
+            lastExpectedReset.setDate(lastExpectedReset.getDate() - 1);
         }
         
-        // Check if we've crossed a reset boundary since last reset
-        if (now >= nextReset && this.lastResetTime < nextReset) {
+        // Check if we've crossed a reset boundary since last actual reset
+        if (this.lastResetTime < lastExpectedReset) {
             this.showResetModal();
             this.lastResetTime = now; // Update last reset time
             this.saveData();
@@ -204,6 +208,11 @@ class TodayTodo {
             }
         });
         
+        // Safari iOS compatibility - ensure input can be focused manually
+        addTaskInput.addEventListener('click', () => {
+            addTaskInput.focus();
+        });
+        
         // Duration pills
         const durationPills = document.querySelectorAll('.duration-pill');
         durationPills.forEach(pill => {
@@ -231,6 +240,10 @@ class TodayTodo {
         
         // Touch events for mobile browsers
         addTaskOverlay.addEventListener('touchstart', (e) => {
+            // Don't interfere with input field touch handling
+            if (e.target.closest('input')) {
+                return;
+            }
             // Close if touching overlay background or outside the container
             if (e.target === addTaskOverlay || !e.target.closest('.add-task-container')) {
                 e.preventDefault();
@@ -241,6 +254,10 @@ class TodayTodo {
         // Prevent scrolling within the overlay - Chrome-specific fixes
         // But allow scrolling within the duration pills container
         addTaskOverlay.addEventListener('touchmove', (e) => {
+            // Don't interfere with input field touch handling
+            if (e.target.closest('input')) {
+                return;
+            }
             // Allow scrolling if touching the pills container
             if (!e.target.closest('.duration-pills-container')) {
                 e.preventDefault();
@@ -263,7 +280,10 @@ class TodayTodo {
         }, { passive: false });
         
         addTaskOverlay.addEventListener('touchend', (e) => {
-            e.preventDefault();
+            // Don't prevent default for input fields - let them handle cursor positioning
+            if (!e.target.closest('input')) {
+                e.preventDefault();
+            }
         }, { passive: false });
         
         // Sort button - toggle between creation and duration sorting
@@ -325,7 +345,7 @@ class TodayTodo {
             this.longPressTriggered = false;
             longPressTimer = setTimeout(() => {
                 this.longPressTriggered = true;
-                this.simulateNextDay();
+            this.simulateNextDay();
                 console.log('Next day simulated via long press on settings button');
             }, 1000); // 1 second long press
         });
@@ -356,6 +376,7 @@ class TodayTodo {
         document.getElementById('resetTime').addEventListener('change', (e) => {
             this.settings.resetTime = e.target.value;
             this.updateTimeDisplay();
+            this.updateResetCountdown();
             this.saveData();
         });
         
@@ -549,6 +570,14 @@ class TodayTodo {
         // Pre-populate input with current task text
         input.value = task.text || '';
         
+        // Set checkbox state based on task completion
+        const checkbox = document.querySelector('.add-task-checkbox');
+        if (task.completed) {
+            checkbox.classList.add('checked');
+        } else {
+            checkbox.classList.remove('checked');
+        }
+        
         // Set selected duration based on task's current duration
         this.selectedDuration = (task.duration !== undefined && task.duration !== null) ? task.duration : null;
         
@@ -673,6 +702,35 @@ class TodayTodo {
         progressFill.style.width = `${percentage}%`;
     }
     
+    updateResetCountdown() {
+        const now = new Date();
+        const resetTime = this.settings.resetTime.split(':');
+        const resetHour = parseInt(resetTime[0]);
+        const resetMinute = parseInt(resetTime[1]);
+        
+        // Calculate next reset time
+        const nextReset = new Date(now);
+        nextReset.setHours(resetHour, resetMinute, 0, 0);
+        
+        // If the reset time has already passed today, it's tomorrow
+        if (now >= nextReset) {
+            nextReset.setDate(nextReset.getDate() + 1);
+        }
+        
+        // Calculate time difference
+        const timeDiff = nextReset - now;
+        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        // Format as HH:MM
+        const countdownText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        
+        const countdownElement = document.getElementById('resetCountdown');
+        if (countdownElement) {
+            countdownElement.textContent = countdownText;
+        }
+    }
+    
     updateRemainingTime() {
         const remainingTimeElement = document.getElementById('remainingTime');
         const unfinishedTasks = this.tasks.filter(task => !task.completed);
@@ -699,9 +757,9 @@ class TodayTodo {
             
             if (hours > 0) {
             remainingTimeElement.textContent = `${prefix}${hours}:${minutes.toString().padStart(2, '0')}`;
-        } else {
+            } else {
             remainingTimeElement.textContent = `${prefix}0:${minutes.toString().padStart(2, '0')}`;
-        }
+            }
         
         // Gray out when zero
         if (totalMinutes === 0) {
@@ -817,11 +875,15 @@ class TodayTodo {
             this.keyboardCleanup = cleanup;
         }
         
-        // Wait for one frame before focusing (faster than double-RAF)
-        requestAnimationFrame(() => {
+        // Focus immediately for Safari iOS compatibility
+        // Safari iOS requires immediate focus without delays
+        try {
             element.focus({ preventScroll: true });
             ensureIntoView();
-        });
+        } catch (e) {
+            // Fallback for older browsers
+            element.focus();
+        }
     }
     
     hideAddTaskModal() {
@@ -963,6 +1025,7 @@ class TodayTodo {
         this.settings.resetTime = `${hour.toString().padStart(2, '0')}:00`;
         this.updateTimeDisplay();
         this.updateTimePickerSelection();
+        this.updateResetCountdown();
         this.saveData();
         
         // Close the time picker after selection
