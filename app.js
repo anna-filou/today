@@ -255,16 +255,6 @@ class TodayTodo {
         addTaskInput.setAttribute('data-lpignore', 'true');
         addTaskInput.setAttribute('data-form-type', 'other');
         
-        // Clear any autocomplete suggestions on focus
-        addTaskInput.addEventListener('focus', () => {
-            // Temporarily clear autocomplete to prevent suggestions
-            const currentValue = addTaskInput.value;
-            addTaskInput.setAttribute('autocomplete', 'off');
-            setTimeout(() => {
-                addTaskInput.value = currentValue;
-            }, 0);
-        });
-        
         // Duration pills
         const durationPills = document.querySelectorAll('.duration-pill');
         durationPills.forEach(pill => {
@@ -359,7 +349,7 @@ class TodayTodo {
         
         // Email Feedback link in settings
         document.getElementById('emailFeedbackLink').addEventListener('click', () => {
-            const version = '1.2.6';
+            const version = '1.2.7';
             const subject = `Feedback for Today v${version}`;
             const mailtoLink = `mailto:today@annafilou.com?subject=${encodeURIComponent(subject)}`;
             window.location.href = mailtoLink;
@@ -1106,7 +1096,7 @@ class TodayTodo {
                 const targetY = Math.max(visibleTop + 20, rect.top - 100);
                 element.scrollIntoView({ 
                     block: 'center', 
-                    behavior: 'smooth',
+                    behavior: 'instant',
                     inline: 'nearest'
                 });
             }
@@ -1135,8 +1125,10 @@ class TodayTodo {
         // Focus immediately for Safari iOS compatibility
         // Safari iOS requires immediate focus without delays
         try {
-            element.focus({ preventScroll: true });
-            // Delay the positioning to allow keyboard to appear
+            // Let the browser naturally scroll the input into view
+            element.focus();
+            // Also ensure it's visible after keyboard appears
+            setTimeout(ensureIntoView, 100);
             setTimeout(ensureIntoView, 300);
         } catch (e) {
             // Fallback for older browsers
