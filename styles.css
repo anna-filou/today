@@ -646,15 +646,27 @@ input, textarea {
 .setting-link {
     cursor: pointer;
     transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
 }
 
 .setting-link:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
+.setting-link svg {
+    flex-shrink: 0;
+    color: #ffffff;
+}
+
 .setting-arrow {
     color: #666;
     font-weight: 300;
+}
+
+.setting-icon {
+    color: #666;
+    margin-left: auto;
 }
 
 .version-item {
@@ -828,6 +840,14 @@ input, textarea {
     padding: 14px 24px;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.onboarding-btn svg {
+    flex-shrink: 0;
 }
 
 .onboarding-btn:hover {

@@ -12,9 +12,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.5">
+    <link rel="stylesheet" href="styles.css?v=1.2.6">
     <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
-    <script src="app.js?v=1.2.5" defer></script>
+    <script src="app.js?v=1.2.6" defer></script>
 </head>
 <body>
     <noscript>
@@ -112,13 +112,13 @@
                 <input type="time" id="resetTime" value="04:00" style="display: none;">
             </div>
             <div class="setting-item">
-                <span class="setting-label">Sort By</span>
+                <span class="setting-label">Sort by</span>
                 <button class="toggle-btn" id="sortModeToggle">
                     <span class="toggle-value">Creation</span>
                 </button>
             </div>
             <div class="setting-item">
-                <span class="setting-label">Round Total Duration Up</span>
+                <span class="setting-label">Round total duration up</span>
                 <button class="toggle-btn" id="roundDurationToggle">
                     <span class="toggle-value">No</span>
                 </button>
@@ -137,14 +137,21 @@
                 <span class="setting-value" id="resetCountdown">--:--</span>
             </div>
             <div class="setting-item setting-link" id="aboutBtn">
-                <span class="setting-label">About</span>
+                <span class="setting-label">How to use</span>
                 <span class="setting-arrow">→</span>
+            </div>
+            <div class="setting-item setting-link" id="emailFeedbackLink">
+                <span class="setting-label">Email Feedback</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="14" height="14" class="setting-icon">
+                    <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
+                    <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
+                </svg>
             </div>
                 <div class="setting-item">
                     <button class="clear-all-btn" id="clearAllTasks">Clear All Tasks</button>
                 </div>
                 <div class="setting-item version-item">
-                    <span class="version-label">Version 1.2.5</span>
+                    <span class="version-label">Version 1.2.6</span>
                 </div>
             </div>
         </div>
@@ -199,7 +206,12 @@
                 <p class="onboarding-text">By introducing intentional friction, Today encourages you to rethink priorities and focus on what matters.</p>
             </div>
             <div class="modal-footer">
-                <button class="onboarding-btn" id="onboardingGotIt">Watch video</button>
+                <button class="onboarding-btn" id="onboardingGotIt">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                        <path d="M3.25 4A2.25 2.25 0 0 0 1 6.25v7.5A2.25 2.25 0 0 0 3.25 16h7.5A2.25 2.25 0 0 0 13 13.75v-7.5A2.25 2.25 0 0 0 10.75 4h-7.5ZM19 4.75a.75.75 0 0 0-1.28-.53l-3 3a.75.75 0 0 0-.22.53v4.5c0 .199.079.39.22.53l3 3a.75.75 0 0 0 1.28-.53V4.75Z" />
+                    </svg>
+                    Watch video
+                </button>
             </div>
         </div>
     </div>

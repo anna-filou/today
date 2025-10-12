@@ -357,6 +357,14 @@ class TodayTodo {
             this.showOnboarding();
         });
         
+        // Email Feedback link in settings
+        document.getElementById('emailFeedbackLink').addEventListener('click', () => {
+            const version = '1.2.6';
+            const subject = `Feedback for Today v${version}`;
+            const mailtoLink = `mailto:today@annafilou.com?subject=${encodeURIComponent(subject)}`;
+            window.location.href = mailtoLink;
+        });
+        
         // Onboarding close button
         document.getElementById('onboardingClose').addEventListener('click', () => {
             this.closeOnboarding();
