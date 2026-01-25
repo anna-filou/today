@@ -5,7 +5,8 @@ class TodayTodo {
             resetTime: '04:00',
             roundDuration: false,
             sortMode: 'creation',
-            locationAccess: false
+            locationAccess: false,
+            autoAddEmojis: true
         };
         this.userLocation = null; // Will store {lat, lng} coordinates
         this.lastResetTime = new Date();
@@ -386,6 +387,11 @@ class TodayTodo {
             this.toggleSortMode();
         });
         
+        // Auto-add emojis toggle
+        document.getElementById('autoAddEmojisToggle').addEventListener('click', () => {
+            this.toggleAutoAddEmojis();
+        });
+        
         // Toggle rounding by tapping the remaining time in header
         const remainingTimeElement = document.getElementById('remainingTime');
         
@@ -485,11 +491,17 @@ class TodayTodo {
         this.updateRoundDurationDisplay();
         this.updateLocationAccessDisplay();
         this.updateSortModeDisplay();
+        this.updateAutoAddEmojisDisplay();
     }
     
     addTask(text) {
         const duration = this.extractDuration(text);
-        const cleanText = this.removeDurationFromText(text);
+        let cleanText = this.removeDurationFromText(text);
+        
+        // Apply emoji if setting enabled and module loaded
+        if (this.settings.autoAddEmojis && typeof applyEmojiToTask === 'function') {
+            cleanText = applyEmojiToTask(cleanText);
+        }
         
         const task = {
             id: Date.now(),
@@ -1280,6 +1292,23 @@ class TodayTodo {
             this.updateSunriseSunsetPositions(); // Hide indicators
             this.updateProgressBarColor(new Date()); // Update progress bar color immediately
             this.saveData();
+        }
+    }
+    
+    toggleAutoAddEmojis() {
+        this.settings.autoAddEmojis = !this.settings.autoAddEmojis;
+        this.updateAutoAddEmojisDisplay();
+        this.saveData();
+    }
+    
+    updateAutoAddEmojisDisplay() {
+        const toggleBtn = document.getElementById('autoAddEmojisToggle');
+        const toggleValue = toggleBtn.querySelector('.toggle-value');
+        
+        if (this.settings.autoAddEmojis) {
+            toggleValue.innerHTML = '<span class="toggle-checkmark">✓</span>Yes';
+        } else {
+            toggleValue.textContent = 'No';
         }
     }
     
