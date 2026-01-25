@@ -8,17 +8,22 @@
 const EMOJI_WORD_BANK = [
     // Shopping & Errands
     { word: 'buy', emoji: '🛒' },
+    { word: 'market', emoji: '🛒' },
     { word: 'shop', emoji: '🛍️' },
-    { word: 'grocery', emoji: '🥬' },
+    { word: 'groceries', emoji: '🥬' },
     { word: 'pick up', emoji: '📦' },
     { word: 'return', emoji: '↩️' },
     
     // Communication
+    { word: 'watch', emoji: '👀' },
     { word: 'call', emoji: '☎️' },
     { word: 'email', emoji: '📧' },
     { word: 'text', emoji: '💬' },
     { word: 'message', emoji: '💬' },
     { word: 'reply', emoji: '↪️' },
+    { word: 'talk', emoji: '🗣️' },
+
+    { word: 'play', emoji: '🎲' },
     
     // Work & Productivity
     { word: 'meeting', emoji: '📅' },
@@ -29,17 +34,20 @@ const EMOJI_WORD_BANK = [
     { word: 'review', emoji: '🔍' },
     
     // Health & Fitness
-    { word: 'workout', emoji: '💪' },
     { word: 'gym', emoji: '🏋️' },
+    { word: 'workout', emoji: '💪' },
+    { word: 'exercise', emoji: '💪' },
     { word: 'run', emoji: '🏃' },
     { word: 'walk', emoji: '🚶' },
     { word: 'yoga', emoji: '🧘' },
+    { word: 'stretch', emoji: '🧘' },
     { word: 'doctor', emoji: '🩺' },
     { word: 'dentist', emoji: '🦷' },
     { word: 'meditate', emoji: '🧘' },
     
     // Food & Drink
     { word: 'coffee', emoji: '☕' },
+    { word: 'tea', emoji: '🍵' },
     { word: 'lunch', emoji: '🍽️' },
     { word: 'dinner', emoji: '🍽️' },
     { word: 'cook', emoji: '🍳' },
@@ -62,18 +70,20 @@ const EMOJI_WORD_BANK = [
     { word: 'homework', emoji: '📝' },
     
     // Finance
-    { word: 'pay', emoji: '💳' },
+    { word: 'pay', emoji: '💸' },
     { word: 'bill', emoji: '🧾' },
     { word: 'bank', emoji: '🏦' },
     { word: 'budget', emoji: '💰' },
     
     // Travel & Transport
-    { word: 'book', emoji: '🎫' },
     { word: 'flight', emoji: '✈️' },
     { word: 'hotel', emoji: '🏨' },
     { word: 'pack', emoji: '🧳' },
     { word: 'trip', emoji: '🗺️' },
     { word: 'drive', emoji: '🚗' },
+    { word: 'driving', emoji: '🚗' },
+    { word: 'parking', emoji: '🅿️' },
+    { word: 'ticket', emoji: '🎟️' },
     
     // Social
     { word: 'party', emoji: '🎉' },
@@ -84,12 +94,65 @@ const EMOJI_WORD_BANK = [
     // Creative & Misc
     { word: 'write', emoji: '✍️' },
     { word: 'design', emoji: '🎨' },
-    { word: 'photo', emoji: '📸' },
+    { word: 'draw', emoji: '✏️' },
+    { word: 'photo', emoji: '🖼️' },
+    { word: 'video', emoji: '🎬' },
+    { word: 'music', emoji: '🎵' },
+    { word: 'movie', emoji: '🍿' },
+    { word: 'cinema', emoji: '🍿' },
+    { word: 'series', emoji: '🍿' },
+    { word: 'theater', emoji: '🎭' },
     { word: 'water', emoji: '💧' },
     { word: 'plant', emoji: '🌱' },
     { word: 'dog', emoji: '🐕' },
     { word: 'cat', emoji: '🐈' },
     { word: 'vet', emoji: '🏥' },
+    
+    // Personal Care
+    { word: 'haircut', emoji: '💈' },
+    { word: 'bathroom', emoji: '🚽' },
+    { word: 'eat', emoji: '🍴' },
+    
+    // Tech & Digital
+    { word: 'code', emoji: '💻' },
+    { word: 'coding', emoji: '💻' },
+    { word: 'laptop', emoji: '💻' },
+    { word: 'download', emoji: '⬇️' },
+    { word: 'update', emoji: '🔄' },
+    { word: 'files', emoji: '📁' },
+    { word: 'Notion', emoji: '📓' },
+    
+    // Planning & Notes
+    { word: 'agenda', emoji: '📝' },
+    { word: 'plan', emoji: '📝' },
+    { word: 'notes', emoji: '📝' },
+    { word: 'note', emoji: '📝' },
+    { word: 'spec', emoji: '📄' },
+    { word: 'specs', emoji: '📄' },
+    { word: 'intro', emoji: '🗓️' },
+    { word: 'feedback', emoji: '💬' },
+    
+    // Transport (additional)
+    { word: 'car', emoji: '🚗' },
+    { word: 'bus', emoji: '🚌' },
+    { word: 'courier', emoji: '📦' },
+    
+    // Shopping & Delivery (additional)
+    { word: 'package', emoji: '📦' },
+    { word: 'invoice', emoji: '🧾' },
+    { word: 'check out', emoji: '👉' },
+    { word: 'try', emoji: '👉' },
+    { word: 'add', emoji: '➕' },
+
+    // Custom
+    { word: 'WaniKani', emoji: '🦀' },
+    { word: 'Jest', emoji: '❇️' },
+    { word: 'Inuyasha', emoji: '🍿' },
+    { word: 'portfolio', emoji: '💻' },
+    { word: 'beach', emoji: '🏖️' },
+    { word: 'lake', emoji: '🏞️' },
+    { word: 'wash', emoji: '🧼' },
+    { word: 'shower', emoji: '🚿' },
 ];
 
 /**
