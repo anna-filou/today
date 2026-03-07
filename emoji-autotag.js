@@ -34,6 +34,7 @@ const EMOJI_WORD_BANK = [
     { word: 'review', emoji: '🔍' },
     { word: 'research', emoji: '🔍' },
     { word: 'search', emoji: '🔍' },
+    { word: 'QA', emoji: '👀' },
     
     // Health & Fitness
     { word: 'gym', emoji: '🏋️' },
@@ -54,6 +55,10 @@ const EMOJI_WORD_BANK = [
     { word: 'dinner', emoji: '🍽️' },
     { word: 'cook', emoji: '🍳' },
     { word: 'breakfast', emoji: '🥞' },
+    { word: 'brunch', emoji: '🥪' },
+    { word: 'pizza', emoji: '🍕' },
+    { word: 'burger', emoji: '🍔' },
+    { word: 'sushi', emoji: '🍣' },
     
     // Home & Chores
     { word: 'clean', emoji: '🧹' },
@@ -83,6 +88,11 @@ const EMOJI_WORD_BANK = [
     { word: 'pack', emoji: '🧳' },
     { word: 'trip', emoji: '🗺️' },
     { word: 'map', emoji: '🗺️' },
+    { word: 'Taxi', emoji: '🚕' },
+    { word: 'Uber', emoji: '🚕' },
+    { word: 'Lyft', emoji: '🚕' },
+    { word: 'Waymo', emoji: '🚕' },
+    { word: 'Zoox', emoji: '🚕' },
     { word: 'drive', emoji: '🚗' },
     { word: 'driving', emoji: '🚗' },
     { word: 'parking', emoji: '🅿️' },
@@ -132,6 +142,8 @@ const EMOJI_WORD_BANK = [
     { word: 'plan', emoji: '📝' },
     { word: 'notes', emoji: '📝' },
     { word: 'note', emoji: '📝' },
+    { word: 'list', emoji: '📃' },
+    { word: 'document', emoji: '📄' },
     { word: 'spec', emoji: '📄' },
     { word: 'specs', emoji: '📄' },
     { word: 'intro', emoji: '🗓️' },
