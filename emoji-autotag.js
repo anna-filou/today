@@ -32,6 +32,8 @@ const EMOJI_WORD_BANK = [
     { word: 'deadline', emoji: '⏰' },
     { word: 'submit', emoji: '📤' },
     { word: 'review', emoji: '🔍' },
+    { word: 'research', emoji: '🔍' },
+    { word: 'search', emoji: '🔍' },
     
     // Health & Fitness
     { word: 'gym', emoji: '🏋️' },
@@ -80,6 +82,7 @@ const EMOJI_WORD_BANK = [
     { word: 'hotel', emoji: '🏨' },
     { word: 'pack', emoji: '🧳' },
     { word: 'trip', emoji: '🗺️' },
+    { word: 'map', emoji: '🗺️' },
     { word: 'drive', emoji: '🚗' },
     { word: 'driving', emoji: '🚗' },
     { word: 'parking', emoji: '🅿️' },
@@ -95,7 +98,9 @@ const EMOJI_WORD_BANK = [
     { word: 'write', emoji: '✍️' },
     { word: 'design', emoji: '🎨' },
     { word: 'draw', emoji: '✏️' },
-    { word: 'photo', emoji: '🖼️' },
+    { word: 'photo', emoji: '📷' },
+    { word: 'scan', emoji: '📸' },
+    { word: 'print', emoji: '🖨️' },
     { word: 'video', emoji: '🎬' },
     { word: 'music', emoji: '🎵' },
     { word: 'movie', emoji: '🍿' },
@@ -153,6 +158,11 @@ const EMOJI_WORD_BANK = [
     { word: 'lake', emoji: '🏞️' },
     { word: 'wash', emoji: '🧼' },
     { word: 'shower', emoji: '🚿' },
+    { word: 'bath', emoji: '🚿' },
+    { word: 'charger', emoji: '⚡' },
+    { word: 'Claude', emoji: '🤖' },
+    { word: 'IPL', emoji: '🔦' },
+    { word: 'nails', emoji: '💅' },
 ];
 
 /**
