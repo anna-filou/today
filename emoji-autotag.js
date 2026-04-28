@@ -186,7 +186,8 @@ function applyEmojiToTask(text) {
     if (!text) return text;
     const lowerText = text.toLowerCase();
     for (const { word, emoji } of EMOJI_WORD_BANK) {
-        if (lowerText.includes(word.toLowerCase())) {
+        const escaped = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (new RegExp(`\\b${escaped}\\b`).test(lowerText)) {
             return `${emoji} ${text}`;
         }
     }
