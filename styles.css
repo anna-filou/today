@@ -1477,9 +1477,10 @@ input, textarea {
 }
 
 .timer-overflow-label {
-    width: 72px;
-    height: 72px;
+    width: 63px;
+    height: 63px;
     flex-shrink: 0;
+    align-self: center;
     display: flex;
     align-items: center;
     justify-content: center;
