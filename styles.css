@@ -1522,8 +1522,9 @@ input, textarea {
     text-align: center;
     max-width: min(65vw, 280px);
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     letter-spacing: -0.01em;
 }
 
