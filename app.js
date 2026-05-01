@@ -1660,15 +1660,11 @@ class TodayTodo {
         if (!task || !task.duration || task.duration <= 0) return;
 
         this.timerTaskId = taskId;
-        const durationMinutes = task.duration;
-        this.timerRemainingSeconds = durationMinutes * 60;
+        this.timerRemainingSeconds = task.duration * 60;
         this.timerOriginalSeconds = this.timerRemainingSeconds;
+        this.timerClockMaxSeconds = 3600;
         this.timerIsPlaying = false;
         this.timerPlayStartAt = null;
-
-        // Round up duration to next hour boundary for clock face size
-        const hours = Math.ceil(durationMinutes / 60);
-        this.timerClockMaxSeconds = hours * 3600;
 
         this.drawTimerTicks();
         this.updateTimerDisplay();
@@ -1854,7 +1850,10 @@ class TodayTodo {
         const sector = document.getElementById('timerSector');
         const cx = 150, cy = 150, r = 132;
 
-        const fraction = this.timerRemainingSeconds / this.timerClockMaxSeconds;
+        // Large clock always represents 1 hour; full when remaining > 3600
+        const fraction = this.timerRemainingSeconds >= 3600
+            ? 1.0
+            : this.timerRemainingSeconds / 3600;
 
         if (fraction <= 0) {
             sector.setAttribute('d', '');
@@ -1881,21 +1880,95 @@ class TodayTodo {
 
     updateTimerDisplay() {
         this.updateTimerSector();
+        this.updateSmallClocks();
 
-        const minutes = Math.floor(this.timerRemainingSeconds / 60);
-        const seconds = this.timerRemainingSeconds % 60;
-        document.getElementById('timerRemaining').textContent =
-            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        const total = this.timerRemainingSeconds;
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        document.getElementById('timerRemaining').textContent = h > 0
+            ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+            : `${m}:${s.toString().padStart(2, '0')}`;
 
         const endEl = document.getElementById('timerEndTime');
-        if (this.timerRemainingSeconds > 0) {
-            const end = new Date(Date.now() + this.timerRemainingSeconds * 1000);
-            const h = end.getHours().toString().padStart(2, '0');
-            const m = end.getMinutes().toString().padStart(2, '0');
-            endEl.textContent = `→ ${h}:${m}`;
+        if (total > 0) {
+            const end = new Date(Date.now() + total * 1000);
+            endEl.textContent = `→ ${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
         } else {
             endEl.textContent = '';
         }
+    }
+
+    updateSmallClocks() {
+        const container = document.getElementById('timerSmallClocks');
+        container.innerHTML = '';
+
+        if (this.timerRemainingSeconds <= 3600) return;
+
+        // Each small clock = one additional 60-min chunk beyond the main clock
+        const overflow = this.timerRemainingSeconds - 3600;
+        const fullClocks = Math.floor(overflow / 3600);
+        const partialFraction = (overflow % 3600) / 3600;
+
+        for (let i = 0; i < fullClocks; i++) {
+            container.appendChild(this.createSmallClock(1.0));
+        }
+        if (partialFraction > 0) {
+            container.appendChild(this.createSmallClock(partialFraction));
+        }
+    }
+
+    createSmallClock(fraction) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'timer-small-clock';
+
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', '100%');
+
+        const cx = 50, cy = 50, r = 44;
+
+        // Sector
+        const sector = document.createElementNS(ns, 'path');
+        sector.setAttribute('fill', '#bc4040');
+        if (fraction >= 1) {
+            sector.setAttribute('d', `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`);
+        } else if (fraction > 0) {
+            const angle = fraction * 2 * Math.PI;
+            const ex = (cx + r * Math.sin(angle)).toFixed(2);
+            const ey = (cy - r * Math.cos(angle)).toFixed(2);
+            sector.setAttribute('d', `M ${cx} ${cy} L ${cx} ${cy - r} A ${r} ${r} 0 ${angle > Math.PI ? 1 : 0} 1 ${ex} ${ey} Z`);
+        }
+        svg.appendChild(sector);
+
+        // Tick marks
+        const ticks = document.createElementNS(ns, 'g');
+        for (let i = 0; i < 60; i++) {
+            const angle = (i / 60) * 2 * Math.PI;
+            const isMajor = i % 5 === 0;
+            const innerR = isMajor ? 36 : 40;
+            const line = document.createElementNS(ns, 'line');
+            line.setAttribute('x1', (cx + innerR * Math.sin(angle)).toFixed(2));
+            line.setAttribute('y1', (cy - innerR * Math.cos(angle)).toFixed(2));
+            line.setAttribute('x2', (cx + r * Math.sin(angle)).toFixed(2));
+            line.setAttribute('y2', (cy - r * Math.cos(angle)).toFixed(2));
+            line.setAttribute('stroke', isMajor ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)');
+            line.setAttribute('stroke-width', isMajor ? '1' : '0.5');
+            line.setAttribute('stroke-linecap', 'round');
+            ticks.appendChild(line);
+        }
+        svg.appendChild(ticks);
+
+        // Center dot
+        const dot = document.createElementNS(ns, 'circle');
+        dot.setAttribute('cx', cx); dot.setAttribute('cy', cy);
+        dot.setAttribute('r', '3'); dot.setAttribute('fill', '#666');
+        svg.appendChild(dot);
+
+        wrapper.appendChild(svg);
+        return wrapper;
     }
 
     updateTimerPlayBtn() {

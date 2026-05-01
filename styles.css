@@ -1445,13 +1445,35 @@ input, textarea {
     gap: 36px;
 }
 
+.timer-clock-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
 .timer-clock-wrapper {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: min(75vw, 75vh, 320px);
-    height: min(75vw, 75vh, 320px);
+    width: min(65vw, 65vh, 280px);
+    height: min(65vw, 65vh, 280px);
+}
+
+.timer-small-clocks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.timer-small-clocks:empty {
+    display: none;
+}
+
+.timer-small-clock {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
 }
 
 .timer-svg {

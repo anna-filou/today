@@ -272,20 +272,23 @@
     <div class="timer-overlay" id="timerOverlay">
         <button class="timer-close-btn" id="timerCloseBtn">×</button>
         <div class="timer-content">
-            <div class="timer-clock-wrapper">
-                <svg id="timerSvg" class="timer-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-                    <path id="timerSector" fill="#bc4040"/>
-                    <g id="timerTicks"></g>
-                    <circle cx="150" cy="150" r="5" fill="#666"/>
-                </svg>
-                <button class="timer-play-btn" id="timerPlayBtn" aria-label="Play/Pause">
-                    <svg id="timerPlayIcon" width="30" height="30" viewBox="0 0 24 24" fill="white">
-                        <path d="M8 5.14v13.72L19 12z"/>
+            <div class="timer-clock-area">
+                <div class="timer-clock-wrapper">
+                    <svg id="timerSvg" class="timer-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                        <path id="timerSector" fill="#bc4040"/>
+                        <g id="timerTicks"></g>
+                        <circle cx="150" cy="150" r="5" fill="#666"/>
                     </svg>
-                    <svg id="timerPauseIcon" width="30" height="30" viewBox="0 0 24 24" fill="white" style="display:none">
-                        <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
-                    </svg>
-                </button>
+                    <button class="timer-play-btn" id="timerPlayBtn" aria-label="Play/Pause">
+                        <svg id="timerPlayIcon" width="30" height="30" viewBox="0 0 24 24" fill="white">
+                            <path d="M8 5.14v13.72L19 12z"/>
+                        </svg>
+                        <svg id="timerPauseIcon" width="30" height="30" viewBox="0 0 24 24" fill="white" style="display:none">
+                            <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="timer-small-clocks" id="timerSmallClocks"></div>
             </div>
             <div class="timer-info">
                 <span class="timer-remaining" id="timerRemaining">25:00</span>
