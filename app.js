@@ -16,7 +16,15 @@ class TodayTodo {
         this.selectedDuration = null; // Track selected duration from pills (in minutes)
         this.deletedTask = null; // Store deleted task for undo
         this.undoTimeout = null; // Timer for clearing deleted task
-        
+
+        // Timer state
+        this.timerTaskId = null;
+        this.timerRemainingSeconds = 0;
+        this.timerClockMaxSeconds = 3600;
+        this.timerInterval = null;
+        this.timerIsPlaying = false;
+        this.timerElapsedSeconds = 0;
+
         this.init();
     }
     
@@ -485,6 +493,14 @@ class TodayTodo {
             });
         });
         
+        // Timer overlay
+        document.getElementById('timerCloseBtn').addEventListener('click', () => this.closeTimer());
+        document.getElementById('timerPlayBtn').addEventListener('click', () => this.toggleTimer());
+        document.getElementById('timerPlayBtn').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.toggleTimer();
+        }, { passive: false });
+
         // Set initial settings value
         document.getElementById('resetTime').value = this.settings.resetTime;
         this.updateTimeDisplay();
@@ -1587,7 +1603,14 @@ class TodayTodo {
             taskContent.appendChild(checkbox);
             taskContent.appendChild(textSpan);
             if (durationSpan) {
-                taskContent.appendChild(durationSpan);
+                const durationWrapper = document.createElement('div');
+                durationWrapper.className = 'task-duration-tap-area';
+                durationWrapper.appendChild(durationSpan);
+                durationWrapper.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openTimer(task.id);
+                });
+                taskContent.appendChild(durationWrapper);
             }
             
             // Add task content to the list item
@@ -1613,6 +1636,182 @@ class TodayTodo {
         });
     }
     
+    openTimer(taskId) {
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task || !task.duration || task.duration <= 0) return;
+
+        this.timerTaskId = taskId;
+        const durationMinutes = task.duration;
+        this.timerRemainingSeconds = durationMinutes * 60;
+        this.timerElapsedSeconds = 0;
+        this.timerIsPlaying = false;
+
+        // Round up duration to next hour boundary for clock face size
+        const hours = Math.ceil(durationMinutes / 60);
+        this.timerClockMaxSeconds = hours * 3600;
+
+        this.drawTimerTicks();
+        this.updateTimerDisplay();
+        this.updateTimerPlayBtn();
+
+        document.getElementById('timerOverlay').classList.add('show');
+    }
+
+    closeTimer() {
+        if (this.timerIsPlaying) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+            this.timerIsPlaying = false;
+        }
+
+        if (this.timerElapsedSeconds > 0 && this.timerTaskId !== null) {
+            const elapsedMinutes = Math.floor(this.timerElapsedSeconds / 60);
+            const subtractMinutes = Math.floor(elapsedMinutes / 5) * 5;
+
+            if (subtractMinutes > 0) {
+                const task = this.tasks.find(t => t.id === this.timerTaskId);
+                if (task) {
+                    const newDuration = (task.duration || 0) - subtractMinutes;
+                    task.duration = newDuration > 0 ? newDuration : null;
+                    this.saveData();
+                    this.updateUI();
+                    this.showToast('Duration updated');
+                }
+            }
+        }
+
+        document.getElementById('timerOverlay').classList.remove('show');
+        this.timerTaskId = null;
+        this.timerElapsedSeconds = 0;
+    }
+
+    playTimer() {
+        if (this.timerIsPlaying || this.timerRemainingSeconds <= 0) return;
+        this.timerIsPlaying = true;
+        this.timerInterval = setInterval(() => {
+            this.timerRemainingSeconds = Math.max(0, this.timerRemainingSeconds - 1);
+            this.timerElapsedSeconds++;
+            this.updateTimerDisplay();
+            if (this.timerRemainingSeconds <= 0) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+                this.timerIsPlaying = false;
+                this.updateTimerPlayBtn();
+            }
+        }, 1000);
+        this.updateTimerPlayBtn();
+    }
+
+    pauseTimer() {
+        if (!this.timerIsPlaying) return;
+        this.timerIsPlaying = false;
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+        this.updateTimerPlayBtn();
+        this.updateTimerDisplay();
+    }
+
+    toggleTimer() {
+        if (this.timerIsPlaying) {
+            this.pauseTimer();
+        } else {
+            this.playTimer();
+        }
+    }
+
+    drawTimerTicks() {
+        const group = document.getElementById('timerTicks');
+        group.innerHTML = '';
+
+        const cx = 150, cy = 150;
+        const outerR = 132;
+        const minorInnerR = 122;
+        const majorInnerR = 110;
+        const numTicks = 60;
+
+        for (let i = 0; i < numTicks; i++) {
+            const angle = (i / numTicks) * 2 * Math.PI;
+            const isMajor = i % 5 === 0;
+            const innerR = isMajor ? majorInnerR : minorInnerR;
+
+            const x1 = (cx + innerR * Math.sin(angle)).toFixed(2);
+            const y1 = (cy - innerR * Math.cos(angle)).toFixed(2);
+            const x2 = (cx + outerR * Math.sin(angle)).toFixed(2);
+            const y2 = (cy - outerR * Math.cos(angle)).toFixed(2);
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', isMajor ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)');
+            line.setAttribute('stroke-width', isMajor ? '3' : '1.5');
+            line.setAttribute('stroke-linecap', 'round');
+
+            group.appendChild(line);
+        }
+    }
+
+    updateTimerSector() {
+        const sector = document.getElementById('timerSector');
+        const cx = 150, cy = 150, r = 132;
+
+        const fraction = this.timerRemainingSeconds / this.timerClockMaxSeconds;
+
+        if (fraction <= 0) {
+            sector.setAttribute('d', '');
+            return;
+        }
+
+        if (fraction >= 1) {
+            // Full circle: two semicircle arcs
+            sector.setAttribute('d',
+                `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`
+            );
+            return;
+        }
+
+        const angle = fraction * 2 * Math.PI;
+        const endX = (cx + r * Math.sin(angle)).toFixed(2);
+        const endY = (cy - r * Math.cos(angle)).toFixed(2);
+        const largeArcFlag = angle > Math.PI ? 1 : 0;
+
+        sector.setAttribute('d',
+            `M ${cx} ${cy} L ${cx} ${cy - r} A ${r} ${r} 0 ${largeArcFlag} 1 ${endX} ${endY} Z`
+        );
+    }
+
+    updateTimerDisplay() {
+        this.updateTimerSector();
+
+        const minutes = Math.floor(this.timerRemainingSeconds / 60);
+        const seconds = this.timerRemainingSeconds % 60;
+        document.getElementById('timerRemaining').textContent =
+            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        const endEl = document.getElementById('timerEndTime');
+        if (this.timerRemainingSeconds > 0) {
+            const end = new Date(Date.now() + this.timerRemainingSeconds * 1000);
+            const h = end.getHours().toString().padStart(2, '0');
+            const m = end.getMinutes().toString().padStart(2, '0');
+            endEl.textContent = `→ ${h}:${m}`;
+        } else {
+            endEl.textContent = '';
+        }
+    }
+
+    updateTimerPlayBtn() {
+        const playIcon = document.getElementById('timerPlayIcon');
+        const pauseIcon = document.getElementById('timerPauseIcon');
+        if (this.timerIsPlaying) {
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'block';
+        } else {
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+        }
+    }
+
     registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
