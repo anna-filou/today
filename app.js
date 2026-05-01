@@ -1848,20 +1848,44 @@ class TodayTodo {
         }
     }
 
+    getTimerBuckets() {
+        const total = this.timerOriginalSeconds;
+        const remaining = this.timerRemainingSeconds;
+        const elapsed = total - remaining;
+
+        const totalFullHours = Math.floor(total / 3600);
+        const totalPartial = total % 3600;
+
+        // Are we past all full-hour buckets and into the partial bucket?
+        const inPartial = elapsed >= totalFullHours * 3600;
+
+        let bigFraction;
+        const smallFractions = [];
+
+        if (!inPartial) {
+            const elapsedFullHours = Math.floor(elapsed / 3600);
+            const elapsedInCurrentHour = elapsed - elapsedFullHours * 3600;
+            bigFraction = (3600 - elapsedInCurrentHour) / 3600;
+
+            // Full hours still waiting after this one
+            const waitingFullHours = totalFullHours - elapsedFullHours - 1;
+            for (let i = 0; i < waitingFullHours; i++) smallFractions.push(1.0);
+            // Partial chunk waiting at the end (constant until its turn)
+            if (totalPartial > 0) smallFractions.push(totalPartial / 3600);
+        } else {
+            // Draining the partial bucket
+            const elapsedInPartial = elapsed - totalFullHours * 3600;
+            bigFraction = totalPartial > 0 ? (totalPartial - elapsedInPartial) / 3600 : 0;
+        }
+
+        return { bigFraction, smallFractions };
+    }
+
     updateTimerSector() {
         const sector = document.getElementById('timerSector');
         const cx = 150, cy = 150, r = 132;
 
-        // Big clock drains first: represents the current draining chunk (remaining % 3600)
-        const remaining = this.timerRemainingSeconds;
-        let fraction;
-        if (remaining <= 0) {
-            fraction = 0;
-        } else if (remaining % 3600 === 0) {
-            fraction = 1.0;
-        } else {
-            fraction = (remaining % 3600) / 3600;
-        }
+        const { bigFraction: fraction } = this.getTimerBuckets();
 
         if (fraction <= 0) {
             sector.setAttribute('d', '');
@@ -1911,20 +1935,9 @@ class TodayTodo {
         const container = document.getElementById('timerSmallClocks');
         container.innerHTML = '';
 
-        const remaining = this.timerRemainingSeconds;
-
-        // Small clocks = full hours waiting after the current draining chunk
-        let numFullClocks;
-        if (remaining <= 0) {
-            numFullClocks = 0;
-        } else if (remaining % 3600 === 0) {
-            numFullClocks = Math.max(0, (remaining / 3600) - 1);
-        } else {
-            numFullClocks = Math.floor(remaining / 3600);
-        }
-
-        for (let i = 0; i < numFullClocks; i++) {
-            container.appendChild(this.createSmallClock(1.0));
+        const { smallFractions } = this.getTimerBuckets();
+        for (const fraction of smallFractions) {
+            container.appendChild(this.createSmallClock(fraction));
         }
     }
 
