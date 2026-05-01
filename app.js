@@ -20,10 +20,12 @@ class TodayTodo {
         // Timer state
         this.timerTaskId = null;
         this.timerRemainingSeconds = 0;
+        this.timerOriginalSeconds = 0;
         this.timerClockMaxSeconds = 3600;
         this.timerInterval = null;
         this.timerIsPlaying = false;
-        this.timerElapsedSeconds = 0;
+        this.timerPlayStartAt = null;
+        this.timerRemainingAtPlayStart = 0;
 
         this.init();
     }
@@ -33,6 +35,7 @@ class TodayTodo {
         this.checkDailyReset();
         this.setupEventListeners();
         this.updateUI();
+        this.restoreTimerFromStorage();
         this.checkOnboarding();
         this.registerServiceWorker();
         
@@ -500,6 +503,22 @@ class TodayTodo {
             e.preventDefault();
             this.toggleTimer();
         }, { passive: false });
+
+        // Reconcile timer when tab becomes visible again (e.g. returning from another app)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && this.timerIsPlaying) {
+                const elapsed = Math.round((Date.now() - this.timerPlayStartAt) / 1000);
+                this.timerRemainingSeconds = Math.max(0, this.timerRemainingAtPlayStart - elapsed);
+                this.updateTimerDisplay();
+                if (this.timerRemainingSeconds <= 0) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                    this.timerIsPlaying = false;
+                    this.clearSavedTimerState();
+                    this.updateTimerPlayBtn();
+                }
+            }
+        });
 
         // Set initial settings value
         document.getElementById('resetTime').value = this.settings.resetTime;
@@ -1643,8 +1662,9 @@ class TodayTodo {
         this.timerTaskId = taskId;
         const durationMinutes = task.duration;
         this.timerRemainingSeconds = durationMinutes * 60;
-        this.timerElapsedSeconds = 0;
+        this.timerOriginalSeconds = this.timerRemainingSeconds;
         this.timerIsPlaying = false;
+        this.timerPlayStartAt = null;
 
         // Round up duration to next hour boundary for clock face size
         const hours = Math.ceil(durationMinutes / 60);
@@ -1659,13 +1679,18 @@ class TodayTodo {
 
     closeTimer() {
         if (this.timerIsPlaying) {
+            // Sync remaining to wall clock before stopping
+            const elapsed = Math.round((Date.now() - this.timerPlayStartAt) / 1000);
+            this.timerRemainingSeconds = Math.max(0, this.timerRemainingAtPlayStart - elapsed);
             clearInterval(this.timerInterval);
             this.timerInterval = null;
             this.timerIsPlaying = false;
         }
+        this.clearSavedTimerState();
 
-        if (this.timerElapsedSeconds > 0 && this.timerTaskId !== null) {
-            const elapsedMinutes = Math.floor(this.timerElapsedSeconds / 60);
+        const elapsedSeconds = this.timerOriginalSeconds - this.timerRemainingSeconds;
+        if (elapsedSeconds > 0 && this.timerTaskId !== null) {
+            const elapsedMinutes = Math.floor(elapsedSeconds / 60);
             const subtractMinutes = Math.floor(elapsedMinutes / 5) * 5;
 
             if (subtractMinutes > 0) {
@@ -1682,31 +1707,41 @@ class TodayTodo {
 
         document.getElementById('timerOverlay').classList.remove('show');
         this.timerTaskId = null;
-        this.timerElapsedSeconds = 0;
+        this.timerPlayStartAt = null;
     }
 
     playTimer() {
         if (this.timerIsPlaying || this.timerRemainingSeconds <= 0) return;
         this.timerIsPlaying = true;
+        this.timerPlayStartAt = Date.now();
+        this.timerRemainingAtPlayStart = this.timerRemainingSeconds;
+        this.saveTimerState();
+
         this.timerInterval = setInterval(() => {
-            this.timerRemainingSeconds = Math.max(0, this.timerRemainingSeconds - 1);
-            this.timerElapsedSeconds++;
+            const elapsed = Math.round((Date.now() - this.timerPlayStartAt) / 1000);
+            this.timerRemainingSeconds = Math.max(0, this.timerRemainingAtPlayStart - elapsed);
             this.updateTimerDisplay();
             if (this.timerRemainingSeconds <= 0) {
                 clearInterval(this.timerInterval);
                 this.timerInterval = null;
                 this.timerIsPlaying = false;
+                this.clearSavedTimerState();
                 this.updateTimerPlayBtn();
             }
-        }, 1000);
+        }, 500);
         this.updateTimerPlayBtn();
     }
 
     pauseTimer() {
         if (!this.timerIsPlaying) return;
+        // Sync remaining to wall clock before pausing
+        const elapsed = Math.round((Date.now() - this.timerPlayStartAt) / 1000);
+        this.timerRemainingSeconds = Math.max(0, this.timerRemainingAtPlayStart - elapsed);
         this.timerIsPlaying = false;
         clearInterval(this.timerInterval);
         this.timerInterval = null;
+        this.timerPlayStartAt = null;
+        this.clearSavedTimerState();
         this.updateTimerPlayBtn();
         this.updateTimerDisplay();
     }
@@ -1717,6 +1752,69 @@ class TodayTodo {
         } else {
             this.playTimer();
         }
+    }
+
+    saveTimerState() {
+        localStorage.setItem('todayTodo_runningTimer', JSON.stringify({
+            taskId: this.timerTaskId,
+            clockMaxSeconds: this.timerClockMaxSeconds,
+            originalSeconds: this.timerOriginalSeconds,
+            remainingAtStart: this.timerRemainingAtPlayStart,
+            playStartAt: this.timerPlayStartAt
+        }));
+    }
+
+    clearSavedTimerState() {
+        localStorage.removeItem('todayTodo_runningTimer');
+    }
+
+    restoreTimerFromStorage() {
+        const saved = localStorage.getItem('todayTodo_runningTimer');
+        if (!saved) return;
+
+        let state;
+        try { state = JSON.parse(saved); } catch (e) {
+            localStorage.removeItem('todayTodo_runningTimer');
+            return;
+        }
+
+        const { taskId, clockMaxSeconds, originalSeconds, remainingAtStart, playStartAt } = state;
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task) {
+            localStorage.removeItem('todayTodo_runningTimer');
+            return;
+        }
+
+        const elapsedSincePlay = Math.round((Date.now() - playStartAt) / 1000);
+        const newRemaining = Math.max(0, remainingAtStart - elapsedSincePlay);
+
+        this.timerTaskId = taskId;
+        this.timerClockMaxSeconds = clockMaxSeconds;
+        this.timerOriginalSeconds = originalSeconds;
+        this.timerRemainingSeconds = newRemaining;
+        this.timerIsPlaying = false;
+        this.timerPlayStartAt = null;
+        localStorage.removeItem('todayTodo_runningTimer');
+
+        if (newRemaining <= 0) {
+            // Timer finished while browser was closed — apply full elapsed duration
+            const elapsedMinutes = Math.floor(originalSeconds / 60);
+            const subtractMinutes = Math.floor(elapsedMinutes / 5) * 5;
+            if (subtractMinutes > 0 && task.duration) {
+                const newDuration = task.duration - subtractMinutes;
+                task.duration = newDuration > 0 ? newDuration : null;
+                this.saveData();
+                this.updateUI();
+                this.showToast('Duration updated');
+            }
+            return;
+        }
+
+        // Show overlay paused at the correct remaining time
+        this.drawTimerTicks();
+        this.updateTimerDisplay();
+        this.updateTimerPlayBtn();
+        document.getElementById('timerOverlay').classList.add('show');
     }
 
     drawTimerTicks() {
