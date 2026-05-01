@@ -1669,6 +1669,7 @@ class TodayTodo {
         this.drawTimerTicks();
         this.updateTimerDisplay();
         this.updateTimerPlayBtn();
+        document.getElementById('timerTaskName').textContent = task.text || '';
 
         document.getElementById('timerOverlay').classList.add('show');
     }
@@ -1810,6 +1811,7 @@ class TodayTodo {
         this.drawTimerTicks();
         this.updateTimerDisplay();
         this.updateTimerPlayBtn();
+        document.getElementById('timerTaskName').textContent = task.text || '';
         document.getElementById('timerOverlay').classList.add('show');
     }
 
@@ -1846,14 +1848,44 @@ class TodayTodo {
         }
     }
 
+    getTimerBuckets() {
+        const total = this.timerOriginalSeconds;
+        const remaining = this.timerRemainingSeconds;
+        const elapsed = total - remaining;
+
+        const totalFullHours = Math.floor(total / 3600);
+        const totalPartial = total % 3600;
+
+        // Are we past all full-hour buckets and into the partial bucket?
+        const inPartial = elapsed >= totalFullHours * 3600;
+
+        let bigFraction;
+        const smallFractions = [];
+
+        if (!inPartial) {
+            const elapsedFullHours = Math.floor(elapsed / 3600);
+            const elapsedInCurrentHour = elapsed - elapsedFullHours * 3600;
+            bigFraction = (3600 - elapsedInCurrentHour) / 3600;
+
+            // Full hours still waiting after this one
+            const waitingFullHours = totalFullHours - elapsedFullHours - 1;
+            for (let i = 0; i < waitingFullHours; i++) smallFractions.push(1.0);
+            // Partial chunk waiting at the end (constant until its turn)
+            if (totalPartial > 0) smallFractions.push(totalPartial / 3600);
+        } else {
+            // Draining the partial bucket
+            const elapsedInPartial = elapsed - totalFullHours * 3600;
+            bigFraction = totalPartial > 0 ? (totalPartial - elapsedInPartial) / 3600 : 0;
+        }
+
+        return { bigFraction, smallFractions };
+    }
+
     updateTimerSector() {
         const sector = document.getElementById('timerSector');
         const cx = 150, cy = 150, r = 132;
 
-        // Large clock always represents 1 hour; full when remaining > 3600
-        const fraction = this.timerRemainingSeconds >= 3600
-            ? 1.0
-            : this.timerRemainingSeconds / 3600;
+        const { bigFraction: fraction } = this.getTimerBuckets();
 
         if (fraction <= 0) {
             sector.setAttribute('d', '');
@@ -1903,18 +1935,20 @@ class TodayTodo {
         const container = document.getElementById('timerSmallClocks');
         container.innerHTML = '';
 
-        if (this.timerRemainingSeconds <= 3600) return;
+        const { smallFractions } = this.getTimerBuckets();
 
-        // Each small clock = one additional 60-min chunk beyond the main clock
-        const overflow = this.timerRemainingSeconds - 3600;
-        const fullClocks = Math.floor(overflow / 3600);
-        const partialFraction = (overflow % 3600) / 3600;
-
-        for (let i = 0; i < fullClocks; i++) {
-            container.appendChild(this.createSmallClock(1.0));
-        }
-        if (partialFraction > 0) {
-            container.appendChild(this.createSmallClock(partialFraction));
+        if (smallFractions.length > 3) {
+            // Cap at 2 small clocks + "+n" overflow label
+            container.appendChild(this.createSmallClock(smallFractions[0]));
+            container.appendChild(this.createSmallClock(smallFractions[1]));
+            const label = document.createElement('div');
+            label.className = 'timer-overflow-label';
+            label.textContent = `+${smallFractions.length - 2}`;
+            container.appendChild(label);
+        } else {
+            for (const fraction of smallFractions) {
+                container.appendChild(this.createSmallClock(fraction));
+            }
         }
     }
 
