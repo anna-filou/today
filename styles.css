@@ -1476,6 +1476,20 @@ input, textarea {
     flex-shrink: 0;
 }
 
+.timer-overflow-label {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: -0.02em;
+}
+
 .timer-svg {
     width: 100%;
     height: 100%;

@@ -1936,8 +1936,19 @@ class TodayTodo {
         container.innerHTML = '';
 
         const { smallFractions } = this.getTimerBuckets();
-        for (const fraction of smallFractions) {
-            container.appendChild(this.createSmallClock(fraction));
+
+        if (smallFractions.length > 3) {
+            // Cap at 2 small clocks + "+n" overflow label
+            container.appendChild(this.createSmallClock(smallFractions[0]));
+            container.appendChild(this.createSmallClock(smallFractions[1]));
+            const label = document.createElement('div');
+            label.className = 'timer-overflow-label';
+            label.textContent = `+${smallFractions.length - 2}`;
+            container.appendChild(label);
+        } else {
+            for (const fraction of smallFractions) {
+                container.appendChild(this.createSmallClock(fraction));
+            }
         }
     }
 
