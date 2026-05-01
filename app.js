@@ -1669,6 +1669,7 @@ class TodayTodo {
         this.drawTimerTicks();
         this.updateTimerDisplay();
         this.updateTimerPlayBtn();
+        document.getElementById('timerTaskName').textContent = task.text || '';
 
         document.getElementById('timerOverlay').classList.add('show');
     }
@@ -1810,6 +1811,7 @@ class TodayTodo {
         this.drawTimerTicks();
         this.updateTimerDisplay();
         this.updateTimerPlayBtn();
+        document.getElementById('timerTaskName').textContent = task.text || '';
         document.getElementById('timerOverlay').classList.add('show');
     }
 
@@ -1850,10 +1852,16 @@ class TodayTodo {
         const sector = document.getElementById('timerSector');
         const cx = 150, cy = 150, r = 132;
 
-        // Large clock always represents 1 hour; full when remaining > 3600
-        const fraction = this.timerRemainingSeconds >= 3600
-            ? 1.0
-            : this.timerRemainingSeconds / 3600;
+        // Big clock drains first: represents the current draining chunk (remaining % 3600)
+        const remaining = this.timerRemainingSeconds;
+        let fraction;
+        if (remaining <= 0) {
+            fraction = 0;
+        } else if (remaining % 3600 === 0) {
+            fraction = 1.0;
+        } else {
+            fraction = (remaining % 3600) / 3600;
+        }
 
         if (fraction <= 0) {
             sector.setAttribute('d', '');
@@ -1903,18 +1911,20 @@ class TodayTodo {
         const container = document.getElementById('timerSmallClocks');
         container.innerHTML = '';
 
-        if (this.timerRemainingSeconds <= 3600) return;
+        const remaining = this.timerRemainingSeconds;
 
-        // Each small clock = one additional 60-min chunk beyond the main clock
-        const overflow = this.timerRemainingSeconds - 3600;
-        const fullClocks = Math.floor(overflow / 3600);
-        const partialFraction = (overflow % 3600) / 3600;
-
-        for (let i = 0; i < fullClocks; i++) {
-            container.appendChild(this.createSmallClock(1.0));
+        // Small clocks = full hours waiting after the current draining chunk
+        let numFullClocks;
+        if (remaining <= 0) {
+            numFullClocks = 0;
+        } else if (remaining % 3600 === 0) {
+            numFullClocks = Math.max(0, (remaining / 3600) - 1);
+        } else {
+            numFullClocks = Math.floor(remaining / 3600);
         }
-        if (partialFraction > 0) {
-            container.appendChild(this.createSmallClock(partialFraction));
+
+        for (let i = 0; i < numFullClocks; i++) {
+            container.appendChild(this.createSmallClock(1.0));
         }
     }
 
