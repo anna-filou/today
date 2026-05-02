@@ -38,20 +38,35 @@ class TodayTodo {
         this.restoreTimerFromStorage();
         this.checkOnboarding();
         this.registerServiceWorker();
-        
+
+        // Re-show the modal if user closed the app before dismissing it last time.
+        if (this.previousDayTasks && this.previousDayTasks.length > 0) {
+            this.showResetModal();
+        }
+
         // Fix PWA viewport height issues
         this.fixPWAViewport();
-        
+
         // Check for daily reset and update progress every minute
         setInterval(() => {
             this.checkDailyReset();
             this.updateDayProgress();
             this.updateResetCountdown();
         }, 60000); // 60000ms = 1 minute
-        
+
+        // setInterval is throttled or paused while a PWA is backgrounded on
+        // mobile, so re-check the reset whenever the page becomes visible.
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.checkDailyReset();
+                this.updateDayProgress();
+                this.updateResetCountdown();
+            }
+        });
+
         // Initial countdown update
         this.updateResetCountdown();
-        
+
         // Initial sunrise/sunset positions
         this.getUserLocation();
     }
@@ -83,20 +98,36 @@ class TodayTodo {
         if (savedTasks) {
             this.tasks = JSON.parse(savedTasks);
         }
-        
+
         // Load settings
         const savedSettings = localStorage.getItem('todayTodo_settings');
         if (savedSettings) {
             this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
         }
-        
+
         // Load sort mode from settings
         this.sortMode = this.settings.sortMode || 'creation';
-        
+
         // Load last reset time
         const savedLastReset = localStorage.getItem('todayTodo_lastReset');
         if (savedLastReset) {
-            this.lastResetTime = new Date(savedLastReset);
+            const parsed = new Date(savedLastReset);
+            if (!isNaN(parsed.getTime())) {
+                this.lastResetTime = parsed;
+            }
+        }
+
+        // Persisted so the reset modal can be re-shown if the user closes
+        // the app before dismissing it.
+        const savedPrevious = localStorage.getItem('todayTodo_previousDayTasks');
+        if (savedPrevious) {
+            try {
+                this.previousDayTasks = JSON.parse(savedPrevious) || [];
+            } catch (e) {
+                this.previousDayTasks = [];
+            }
+        } else {
+            this.previousDayTasks = [];
         }
         
         // Load cached location only if location access is enabled
@@ -112,74 +143,101 @@ class TodayTodo {
         localStorage.setItem('todayTodo_tasks', JSON.stringify(this.tasks));
         localStorage.setItem('todayTodo_settings', JSON.stringify(this.settings));
         localStorage.setItem('todayTodo_lastReset', this.lastResetTime.toISOString());
+        if (this.previousDayTasks && this.previousDayTasks.length > 0) {
+            localStorage.setItem('todayTodo_previousDayTasks', JSON.stringify(this.previousDayTasks));
+        } else {
+            localStorage.removeItem('todayTodo_previousDayTasks');
+        }
     }
     
     checkDailyReset() {
         const now = new Date();
-        
+
         // Parse reset time from settings
-                const resetTime = this.settings.resetTime.split(':');
-                const resetHour = parseInt(resetTime[0]);
-                const resetMinute = parseInt(resetTime[1]);
-                
+        const resetTime = this.settings.resetTime.split(':');
+        const resetHour = parseInt(resetTime[0]);
+        const resetMinute = parseInt(resetTime[1]);
+
         // Calculate the last reset time that should have occurred based on current time
         let lastExpectedReset = new Date(now);
         lastExpectedReset.setHours(resetHour, resetMinute, 0, 0);
-        
+
         // If the reset time hasn't occurred yet today, the last reset was yesterday
         if (now < lastExpectedReset) {
             lastExpectedReset.setDate(lastExpectedReset.getDate() - 1);
         }
-        
+
+        // Guard against an invalid stored lastResetTime (treat as "needs reset")
+        const lastReset = (this.lastResetTime instanceof Date && !isNaN(this.lastResetTime.getTime()))
+            ? this.lastResetTime
+            : new Date(0);
+
         // Check if we've crossed a reset boundary since last actual reset
-        if (this.lastResetTime < lastExpectedReset) {
-                    this.showResetModal();
-            this.lastResetTime = now; // Update last reset time
-            this.saveData();
+        if (lastReset < lastExpectedReset) {
+            const unfinishedTasks = this.tasks.filter(task => !task.completed);
+            if (unfinishedTasks.length > 0) {
+                this.previousDayTasks = unfinishedTasks;
             }
-    }
-    
-    showResetModal() {
-        const unfinishedTasks = this.tasks.filter(task => !task.completed);
-        
-        if (unfinishedTasks.length > 0) {
-            const unfinishedTasksList = document.getElementById('unfinishedTasks');
-            unfinishedTasksList.innerHTML = '';
-            
-            unfinishedTasks.forEach(task => {
-                const taskDiv = document.createElement('div');
-                taskDiv.className = 'unfinished-task';
-                
-                const taskName = document.createElement('div');
-                taskName.className = 'unfinished-task-name';
-                taskName.textContent = task.text;
-                
-                taskDiv.appendChild(taskName);
-                
-                // Only add duration if it exists
-                if (task.duration) {
-                    const taskDuration = document.createElement('div');
-                    taskDuration.className = 'unfinished-task-duration';
-                    taskDuration.textContent = this.formatDuration(task.duration);
-                    taskDiv.appendChild(taskDuration);
-                }
-                
-                unfinishedTasksList.appendChild(taskDiv);
-            });
-            
-            document.getElementById('newDayModal').classList.add('show');
+
+            // Clearing tasks and advancing lastResetTime must happen together:
+            // if lastResetTime moved forward without clearing, force-quitting
+            // the app while the modal is open would leave stale tasks AND a
+            // future-dated marker, suppressing the next reset.
+            this.tasks = [];
+            this.lastResetTime = now;
+            this.saveData();
+            this.updateUI();
+
+            this.showResetModal();
         }
     }
-    
+
+    showResetModal() {
+        const tasks = this.previousDayTasks || [];
+        if (tasks.length === 0) return;
+
+        const unfinishedTasksList = document.getElementById('unfinishedTasks');
+        unfinishedTasksList.innerHTML = '';
+
+        tasks.forEach(task => {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = 'unfinished-task';
+
+            const taskName = document.createElement('div');
+            taskName.className = 'unfinished-task-name';
+            taskName.textContent = task.text;
+
+            taskDiv.appendChild(taskName);
+
+            if (task.duration) {
+                const taskDuration = document.createElement('div');
+                taskDuration.className = 'unfinished-task-duration';
+                taskDuration.textContent = this.formatDuration(task.duration);
+                taskDiv.appendChild(taskDuration);
+            }
+
+            unfinishedTasksList.appendChild(taskDiv);
+        });
+
+        document.getElementById('newDayModal').classList.add('show');
+    }
+
     simulateNextDay() {
-        // Simulate the next day by showing the reset modal
-        // This will display any unfinished tasks as if it's the next day
+        const unfinishedTasks = this.tasks.filter(task => !task.completed);
+        if (unfinishedTasks.length > 0) {
+            this.previousDayTasks = unfinishedTasks;
+        }
+        this.tasks = [];
+        this.lastResetTime = new Date();
+        this.saveData();
+        this.updateUI();
         this.showResetModal();
     }
-    
+
     clearAndStartToday() {
-        this.tasks = [];
-        this.lastResetTime = new Date(); // Update last reset time
+        // Tasks are already cleared by checkDailyReset; this just dismisses
+        // the modal and discards the snapshot.
+        this.previousDayTasks = [];
         this.saveData();
         document.getElementById('newDayModal').classList.remove('show');
         this.updateUI();
