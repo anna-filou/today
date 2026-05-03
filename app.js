@@ -6,7 +6,8 @@ class TodayTodo {
             roundDuration: false,
             sortMode: 'creation',
             locationAccess: false,
-            autoAddEmojis: true
+            autoAddEmojis: true,
+            showAwakeTime: false
         };
         this.userLocation = null; // Will store {lat, lng} coordinates
         this.lastResetTime = new Date();
@@ -460,6 +461,11 @@ class TodayTodo {
         document.getElementById('autoAddEmojisToggle').addEventListener('click', () => {
             this.toggleAutoAddEmojis();
         });
+
+        // Show awake time toggle
+        document.getElementById('showAwakeTimeToggle').addEventListener('click', () => {
+            this.toggleShowAwakeTime();
+        });
         
         // Toggle rounding by tapping the remaining time in header
         const remainingTimeElement = document.getElementById('remainingTime');
@@ -585,6 +591,7 @@ class TodayTodo {
         this.updateLocationAccessDisplay();
         this.updateSortModeDisplay();
         this.updateAutoAddEmojisDisplay();
+        this.updateShowAwakeTimeDisplay();
     }
     
     addTask(text) {
@@ -867,96 +874,99 @@ class TodayTodo {
         yearElement.textContent = year;
     }
     
+    getAwakeWindow() {
+        const [h, m] = this.settings.resetTime.split(':').map(Number);
+        const sleepMin = h * 60 + m; // reset time = when they go to sleep
+        const wakeMin = (sleepMin + 8 * 60) % (24 * 60); // +8h = wake time
+        const awakeDuration = 16 * 60; // always 16 hours
+        return { wakeMin, sleepMin, awakeDuration };
+    }
+
+    minutesSinceWake(nowMin, wakeMin) {
+        // handles midnight crossing
+        return nowMin >= wakeMin ? nowMin - wakeMin : (1440 - wakeMin) + nowMin;
+    }
+
     updateDayProgress() {
         const progressFill = document.getElementById('dayProgressFill');
         const now = new Date();
-        
-        // Calculate percentage of day passed
-        const totalMinutesInDay = 24 * 60; // 1440 minutes
-        const minutesPassed = now.getHours() * 60 + now.getMinutes();
-        const percentage = (minutesPassed / totalMinutesInDay) * 100;
-        
-        // Update progress bar width
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+
+        let percentage;
+        if (this.settings.showAwakeTime) {
+            const { wakeMin, awakeDuration } = this.getAwakeWindow();
+            const elapsed = this.minutesSinceWake(nowMin, wakeMin);
+            percentage = Math.min(Math.max((elapsed / awakeDuration) * 100, 0), 100);
+        } else {
+            percentage = (nowMin / (24 * 60)) * 100;
+        }
+
         progressFill.style.width = `${percentage}%`;
-        
-        // Determine if it's day or night and update color
         this.updateProgressBarColor(now);
-        
-        // Update sunrise and sunset indicator positions
         this.updateSunriseSunsetPositions();
     }
     
     updateProgressBarColor(now) {
         const progressFill = document.getElementById('dayProgressFill');
-        
-        // Check if we have location data
         const hasLocation = this.settings.locationAccess && this.userLocation && typeof SunCalc !== 'undefined';
-        
+
         if (!hasLocation) {
-            // No location data - use white
             progressFill.classList.remove('with-location');
             progressFill.classList.add('no-location');
-            progressFill.style.background = ''; // Clear any inline gradient styles
+            progressFill.style.background = '';
             return;
         }
-        
-        // We have location data - calculate day/night gradient
+
         progressFill.classList.remove('no-location');
         progressFill.classList.add('with-location');
-        
-        // Calculate current progress percentage (how much of the day has passed)
-        const totalMinutesInDay = 24 * 60; // 1440 minutes
-        const minutesPassed = now.getHours() * 60 + now.getMinutes();
-        const currentProgressPercent = (minutesPassed / totalMinutesInDay) * 100;
-        
-        // Get sunrise and sunset times
+
         const times = SunCalc.getTimes(now, this.userLocation.lat, this.userLocation.lng);
-        const sunriseTime = times.sunrise;
-        const sunsetTime = times.sunset;
-        
-        // Calculate sunrise and sunset positions as percentages of the day
-        const sunriseHour = sunriseTime.getHours() + (sunriseTime.getMinutes() / 60);
-        const sunsetHour = sunsetTime.getHours() + (sunsetTime.getMinutes() / 60);
-        
-        const sunrisePercent = (sunriseHour / 24) * 100;
-        const sunsetPercent = (sunsetHour / 24) * 100;
-        
-        // Create gradient stops based on the current progress width
-        let gradientStops = [];
-        
+        const sunriseMin = times.sunrise.getHours() * 60 + times.sunrise.getMinutes();
+        const sunsetMin  = times.sunset.getHours()  * 60 + times.sunset.getMinutes();
+
+        let currentProgressPercent, sunrisePercent, sunsetPercent;
+
+        if (this.settings.showAwakeTime) {
+            const { wakeMin, awakeDuration } = this.getAwakeWindow();
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            const elapsedNow = this.minutesSinceWake(nowMin, wakeMin);
+            currentProgressPercent = Math.min(Math.max((elapsedNow / awakeDuration) * 100, 0), 100);
+
+            // Sunrise/sunset as % of awake window
+            sunrisePercent = (this.minutesSinceWake(sunriseMin, wakeMin) / awakeDuration) * 100;
+            sunsetPercent  = (this.minutesSinceWake(sunsetMin,  wakeMin) / awakeDuration) * 100;
+        } else {
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            currentProgressPercent = (nowMin / (24 * 60)) * 100;
+            sunrisePercent = ((times.sunrise.getHours() + times.sunrise.getMinutes() / 60) / 24) * 100;
+            sunsetPercent  = ((times.sunset.getHours()  + times.sunset.getMinutes()  / 60) / 24) * 100;
+        }
+
+        // Build gradient: positions are scaled to current bar width
+        const scale = (p) => Math.min((p / currentProgressPercent) * 100, 100);
+        let gradientStops;
+
         if (sunsetPercent > sunrisePercent) {
-            // Normal day: sunrise < sunset
-            // Scale the percentages to the current progress width
-            const scaledSunrisePercent = (sunrisePercent / currentProgressPercent) * 100;
-            const scaledSunsetPercent = (sunsetPercent / currentProgressPercent) * 100;
-            
             gradientStops = [
-                `#9d4edd 0%`,                           // Night from start
-                `#9d4edd ${Math.min(scaledSunrisePercent, 100)}%`,    // Night until sunrise
-                `#ffd700 ${Math.min(scaledSunrisePercent, 100)}%`,    // Day from sunrise
-                `#ffd700 ${Math.min(scaledSunsetPercent, 100)}%`,     // Day until sunset
-                `#9d4edd ${Math.min(scaledSunsetPercent, 100)}%`,     // Night from sunset
-                `#9d4edd 100%`                           // Night to end
+                `#9d4edd 0%`,
+                `#9d4edd ${scale(sunrisePercent)}%`,
+                `#ffd700 ${scale(sunrisePercent)}%`,
+                `#ffd700 ${scale(sunsetPercent)}%`,
+                `#9d4edd ${scale(sunsetPercent)}%`,
+                `#9d4edd 100%`
             ];
         } else {
-            // Polar regions: sunset < sunrise (e.g., sunset at 11 PM, sunrise at 5 AM)
-            // Scale the percentages to the current progress width
-            const scaledSunsetPercent = (sunsetPercent / currentProgressPercent) * 100;
-            const scaledSunrisePercent = (sunrisePercent / currentProgressPercent) * 100;
-            
             gradientStops = [
-                `#ffd700 0%`,                           // Day from start
-                `#ffd700 ${Math.min(scaledSunsetPercent, 100)}%`,     // Day until sunset
-                `#9d4edd ${Math.min(scaledSunsetPercent, 100)}%`,     // Night from sunset
-                `#9d4edd ${Math.min(scaledSunrisePercent, 100)}%`,    // Night until sunrise
-                `#ffd700 ${Math.min(scaledSunrisePercent, 100)}%`,    // Day from sunrise
-                `#ffd700 100%`                           // Day to end
+                `#ffd700 0%`,
+                `#ffd700 ${scale(sunsetPercent)}%`,
+                `#9d4edd ${scale(sunsetPercent)}%`,
+                `#9d4edd ${scale(sunrisePercent)}%`,
+                `#ffd700 ${scale(sunrisePercent)}%`,
+                `#ffd700 100%`
             ];
         }
-        
-        // Apply the gradient
-        const gradient = `linear-gradient(to right, ${gradientStops.join(', ')})`;
-        progressFill.style.background = gradient;
+
+        progressFill.style.background = `linear-gradient(to right, ${gradientStops.join(', ')})`;
     }
     
     getUserLocation() {
@@ -1008,39 +1018,43 @@ class TodayTodo {
     updateSunriseSunsetPositions() {
         const sunriseIndicator = document.querySelector('.sunrise-indicator');
         const sunsetIndicator = document.querySelector('.sunset-indicator');
-        
-        // Only show indicators if we have location access and user location
         const shouldShowIndicators = this.settings.locationAccess && this.userLocation && typeof SunCalc !== 'undefined';
-        
+
         if (shouldShowIndicators) {
-            // Use SunCalc to get real sunrise/sunset times
             const now = new Date();
             const times = SunCalc.getTimes(now, this.userLocation.lat, this.userLocation.lng);
-            
-            const sunriseHour = times.sunrise.getHours() + (times.sunrise.getMinutes() / 60);
-            const sunsetHour = times.sunset.getHours() + (times.sunset.getMinutes() / 60);
-            
-            // Calculate positions as percentages of the day
-            const sunrisePosition = (sunriseHour / 24) * 100;
-            const sunsetPosition = (sunsetHour / 24) * 100;
-            
-            // Show indicators and update positions
+            const sunriseMin = times.sunrise.getHours() * 60 + times.sunrise.getMinutes();
+            const sunsetMin  = times.sunset.getHours()  * 60 + times.sunset.getMinutes();
+
+            let sunrisePosition, sunsetPosition;
+            let showSunrise = true, showSunset = true;
+
+            if (this.settings.showAwakeTime) {
+                const { wakeMin, awakeDuration } = this.getAwakeWindow();
+                const sunriseElapsed = this.minutesSinceWake(sunriseMin, wakeMin);
+                const sunsetElapsed  = this.minutesSinceWake(sunsetMin,  wakeMin);
+
+                // Hide if outside the 16-hour awake window
+                showSunrise = sunriseElapsed >= 0 && sunriseElapsed <= awakeDuration;
+                showSunset  = sunsetElapsed  >= 0 && sunsetElapsed  <= awakeDuration;
+                sunrisePosition = (sunriseElapsed / awakeDuration) * 100;
+                sunsetPosition  = (sunsetElapsed  / awakeDuration) * 100;
+            } else {
+                sunrisePosition = ((times.sunrise.getHours() + times.sunrise.getMinutes() / 60) / 24) * 100;
+                sunsetPosition  = ((times.sunset.getHours()  + times.sunset.getMinutes()  / 60) / 24) * 100;
+            }
+
             if (sunriseIndicator) {
-                sunriseIndicator.style.display = 'block';
-                sunriseIndicator.style.left = `${sunrisePosition}%`;
+                sunriseIndicator.style.display = showSunrise ? 'block' : 'none';
+                if (showSunrise) sunriseIndicator.style.left = `${sunrisePosition}%`;
             }
             if (sunsetIndicator) {
-                sunsetIndicator.style.display = 'block';
-                sunsetIndicator.style.left = `${sunsetPosition}%`;
+                sunsetIndicator.style.display = showSunset ? 'block' : 'none';
+                if (showSunset) sunsetIndicator.style.left = `${sunsetPosition}%`;
             }
         } else {
-            // Hide indicators when location is not available
-            if (sunriseIndicator) {
-                sunriseIndicator.style.display = 'none';
-            }
-            if (sunsetIndicator) {
-                sunsetIndicator.style.display = 'none';
-            }
+            if (sunriseIndicator) sunriseIndicator.style.display = 'none';
+            if (sunsetIndicator)  sunsetIndicator.style.display  = 'none';
         }
     }
     
@@ -1405,6 +1419,23 @@ class TodayTodo {
         }
     }
     
+    toggleShowAwakeTime() {
+        this.settings.showAwakeTime = !this.settings.showAwakeTime;
+        this.updateShowAwakeTimeDisplay();
+        this.saveData();
+        this.updateDayProgress();
+    }
+
+    updateShowAwakeTimeDisplay() {
+        const toggleBtn = document.getElementById('showAwakeTimeToggle');
+        const toggleValue = toggleBtn.querySelector('.toggle-value');
+        if (this.settings.showAwakeTime) {
+            toggleValue.innerHTML = '<span class="toggle-checkmark">✓</span>Yes';
+        } else {
+            toggleValue.textContent = 'No';
+        }
+    }
+
     requestLocationPermission() {
         if (!navigator.geolocation) {
             alert('Geolocation is not supported by this browser.');
