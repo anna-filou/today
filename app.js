@@ -421,7 +421,7 @@ class TodayTodo {
         
         // Email Feedback link in settings
         document.getElementById('emailFeedbackLink').addEventListener('click', () => {
-            const version = '1.3.1';
+            const version = '1.3.2';
             const subject = `Feedback for Today v${version}`;
             const mailtoLink = `mailto:today@annafilou.com?subject=${encodeURIComponent(subject)}`;
             window.location.href = mailtoLink;
