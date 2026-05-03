@@ -793,6 +793,13 @@ class TodayTodo {
             return;
         }
 
+        if (!wasBeingCheckedOff && this.sortMode === 'duration') {
+            this.updateRemainingTime();
+            this.updateDayProgress();
+            this.reorderWithAnimation();
+            return;
+        }
+
         this.updateUI();
 
         if (wasBeingCheckedOff) {
