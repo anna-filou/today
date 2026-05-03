@@ -593,6 +593,47 @@ class TodayTodo {
         this.updateSortModeDisplay();
         this.updateAutoAddEmojisDisplay();
         this.updateShowAwakeTimeDisplay();
+
+        // List-level drag handlers — catch drops in padding above/below tasks
+        const taskList = document.getElementById('taskList');
+
+        const getEdgeTarget = (clientY) => {
+            const items = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+            if (!items.length) return null;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (clientY <= first.getBoundingClientRect().top) return { el: first, pos: 'before' };
+            if (clientY >= last.getBoundingClientRect().bottom) return { el: last, pos: 'after' };
+            return null;
+        };
+
+        taskList.addEventListener('dragover', (e) => {
+            if (this.sortMode !== 'manual' || !this.draggedTaskId) return;
+            e.preventDefault();
+            if (e.target.closest('.task-item')) return; // item's own handler covers this
+            taskList.querySelectorAll('.task-item.drag-over-top, .task-item.drag-over-bottom')
+                .forEach(el => el.classList.remove('drag-over-top', 'drag-over-bottom'));
+            const edge = getEdgeTarget(e.clientY);
+            if (edge) edge.el.classList.add(edge.pos === 'before' ? 'drag-over-top' : 'drag-over-bottom');
+        });
+
+        taskList.addEventListener('drop', (e) => {
+            if (this.sortMode !== 'manual' || !this.draggedTaskId) return;
+            e.preventDefault();
+            if (e.target.closest('.task-item')) return; // item's own handler covers this
+            const topEl = taskList.querySelector('.task-item.drag-over-top');
+            const botEl = taskList.querySelector('.task-item.drag-over-bottom');
+            const fromId = this.draggedTaskId;
+            taskList.querySelectorAll('.task-item.drag-over-top, .task-item.drag-over-bottom')
+                .forEach(el => el.classList.remove('drag-over-top', 'drag-over-bottom'));
+            if (topEl) {
+                const tid = parseInt(topEl.dataset.taskId);
+                if (tid !== fromId) this.reorderTask(fromId, tid, 'before');
+            } else if (botEl) {
+                const tid = parseInt(botEl.dataset.taskId);
+                if (tid !== fromId) this.reorderTask(fromId, tid, 'after');
+            }
+        });
     }
     
     addTask(text) {
@@ -1846,12 +1887,29 @@ class TodayTodo {
             if (lastDropTarget) {
                 lastDropTarget.classList.remove('drag-over-top', 'drag-over-bottom');
             }
+
             if (targetLi && targetLi !== li) {
                 lastDropPosition = getPosition(targetLi, touch.clientY);
                 targetLi.classList.add(lastDropPosition === 'before' ? 'drag-over-top' : 'drag-over-bottom');
                 lastDropTarget = targetLi;
-            } else {
-                lastDropTarget = null;
+            } else if (!targetLi || targetLi === li) {
+                // Finger is outside all task items — snap to first or last
+                const items = [...document.querySelectorAll('#taskList .task-item:not(.dragging)')];
+                if (items.length > 0) {
+                    const first = items[0];
+                    const last = items[items.length - 1];
+                    if (touch.clientY <= first.getBoundingClientRect().top) {
+                        first.classList.add('drag-over-top');
+                        lastDropTarget = first;
+                        lastDropPosition = 'before';
+                    } else {
+                        last.classList.add('drag-over-bottom');
+                        lastDropTarget = last;
+                        lastDropPosition = 'after';
+                    }
+                } else {
+                    lastDropTarget = null;
+                }
             }
         }, { passive: false });
 
