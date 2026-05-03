@@ -108,7 +108,10 @@
             </div>
             <div class="modal-body">
                 <div class="setting-item">
-                <span class="setting-label">Day resets at</span>
+                <div class="setting-info">
+                    <span class="setting-label">Day resets at</span>
+                    <span class="setting-subtitle">Next reset in <span id="resetCountdown">--:--</span></span>
+                </div>
                 <button class="time-display" id="resetTimeDisplay">4:00</button>
                 <input type="time" id="resetTime" value="04:00" style="display: none;">
             </div>
@@ -147,10 +150,6 @@
                 <button class="toggle-btn" id="autoAddEmojisToggle">
                     <span class="toggle-value">Yes</span>
                 </button>
-            </div>
-            <div class="setting-item">
-                <span class="setting-label">Time until next reset</span>
-                <span class="setting-value" id="resetCountdown">--:--</span>
             </div>
             <div class="setting-item setting-link" id="aboutBtn">
                 <span class="setting-label">How to use</span>
