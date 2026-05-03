@@ -12,10 +12,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.7">
+    <link rel="stylesheet" href="styles.css?v=1.3.1">
     <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
     <script src="emoji-autotag.js"></script>
-    <script src="app.js?v=1.2.7" defer></script>
+    <script src="app.js?v=1.3.1" defer></script>
 </head>
 <body>
     <noscript>
@@ -108,7 +108,10 @@
             </div>
             <div class="modal-body">
                 <div class="setting-item">
-                <span class="setting-label">Day resets at</span>
+                <div class="setting-info">
+                    <span class="setting-label">Day resets at</span>
+                    <span class="setting-subtitle">Next reset in <span id="resetCountdown">--:--</span></span>
+                </div>
                 <button class="time-display" id="resetTimeDisplay">4:00</button>
                 <input type="time" id="resetTime" value="04:00" style="display: none;">
             </div>
@@ -148,10 +151,6 @@
                     <span class="toggle-value">Yes</span>
                 </button>
             </div>
-            <div class="setting-item">
-                <span class="setting-label">Time until next reset</span>
-                <span class="setting-value" id="resetCountdown">--:--</span>
-            </div>
             <div class="setting-item setting-link" id="aboutBtn">
                 <span class="setting-label">How to use</span>
                 <span class="setting-arrow">→</span>
@@ -167,7 +166,7 @@
                     <button class="clear-all-btn" id="clearAllTasks">Clear All Tasks</button>
                 </div>
                 <div class="setting-item version-item">
-                    <span class="version-label">Version 1.2.7</span>
+                    <span class="version-label">Version 1.3.1</span>
                 </div>
             </div>
         </div>
