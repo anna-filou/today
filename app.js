@@ -17,6 +17,7 @@ class TodayTodo {
         this.selectedDuration = null; // Track selected duration from pills (in minutes)
         this.deletedTask = null; // Store deleted task for undo
         this.undoTimeout = null; // Timer for clearing deleted task
+        this.draggedTaskId = null; // Task being dragged in manual sort mode
 
         // Timer state
         this.timerTaskId = null;
@@ -592,6 +593,47 @@ class TodayTodo {
         this.updateSortModeDisplay();
         this.updateAutoAddEmojisDisplay();
         this.updateShowAwakeTimeDisplay();
+
+        // List-level drag handlers — catch drops in padding above/below tasks
+        const taskList = document.getElementById('taskList');
+
+        const getEdgeTarget = (clientY) => {
+            const items = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+            if (!items.length) return null;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (clientY <= first.getBoundingClientRect().top) return { el: first, pos: 'before' };
+            if (clientY >= last.getBoundingClientRect().bottom) return { el: last, pos: 'after' };
+            return null;
+        };
+
+        taskList.addEventListener('dragover', (e) => {
+            if (this.sortMode !== 'manual' || !this.draggedTaskId) return;
+            e.preventDefault();
+            if (e.target.closest('.task-item')) return; // item's own handler covers this
+            taskList.querySelectorAll('.task-item.drag-over-top, .task-item.drag-over-bottom')
+                .forEach(el => el.classList.remove('drag-over-top', 'drag-over-bottom'));
+            const edge = getEdgeTarget(e.clientY);
+            if (edge) edge.el.classList.add(edge.pos === 'before' ? 'drag-over-top' : 'drag-over-bottom');
+        });
+
+        taskList.addEventListener('drop', (e) => {
+            if (this.sortMode !== 'manual' || !this.draggedTaskId) return;
+            e.preventDefault();
+            if (e.target.closest('.task-item')) return; // item's own handler covers this
+            const topEl = taskList.querySelector('.task-item.drag-over-top');
+            const botEl = taskList.querySelector('.task-item.drag-over-bottom');
+            const fromId = this.draggedTaskId;
+            taskList.querySelectorAll('.task-item.drag-over-top, .task-item.drag-over-bottom')
+                .forEach(el => el.classList.remove('drag-over-top', 'drag-over-bottom'));
+            if (topEl) {
+                const tid = parseInt(topEl.dataset.taskId);
+                if (tid !== fromId) this.reorderTask(fromId, tid, 'before');
+            } else if (botEl) {
+                const tid = parseInt(botEl.dataset.taskId);
+                if (tid !== fromId) this.reorderTask(fromId, tid, 'after');
+            }
+        });
     }
     
     addTask(text) {
@@ -664,15 +706,21 @@ class TodayTodo {
     }
     
     toggleSortMode() {
-        this.sortMode = this.sortMode === 'creation' ? 'duration' : 'creation';
+        if (this.sortMode === 'creation') {
+            this.sortMode = 'duration';
+        } else if (this.sortMode === 'duration') {
+            this.sortMode = 'manual';
+        } else {
+            this.sortMode = 'creation';
+        }
+
         this.settings.sortMode = this.sortMode;
         this.saveData();
         this.renderTasks();
         this.updateSortModeDisplay();
-        
-        // Show toast notification
-        const message = this.sortMode === 'duration' ? 'Sorted by duration' : 'Sorted by creation';
-        this.showToast(message);
+
+        const messages = { creation: 'Sorted by creation', duration: 'Sorted by duration', manual: 'Manual sort' };
+        this.showToast(messages[this.sortMode]);
     }
     
     getSortedTasks() {
@@ -682,7 +730,7 @@ class TodayTodo {
                 // Treat completed tasks as having 0 duration
                 const aDuration = a.completed ? 0 : (a.duration || 0);
                 const bDuration = b.completed ? 0 : (b.duration || 0);
-                
+
                 // If both have no duration, prioritize incomplete tasks
                 if (aDuration === 0 && bDuration === 0) {
                     // If one is completed and one isn't, put completed one after
@@ -703,9 +751,13 @@ class TodayTodo {
                 return bDuration - aDuration;
             });
         }
-        
-        // Default: creation order (as they appear in the array)
-        return this.tasks;
+
+        if (this.sortMode === 'manual') {
+            return this.tasks;
+        }
+
+        // creation: sort by id (Date.now() at creation) so order stays stable after manual reordering
+        return [...this.tasks].sort((a, b) => a.id - b.id);
     }
     
     toggleTask(id) {
@@ -1376,7 +1428,8 @@ class TodayTodo {
     updateSortModeDisplay() {
         const toggleBtn = document.getElementById('sortModeToggle');
         const toggleValue = toggleBtn.querySelector('.toggle-value');
-        toggleValue.textContent = this.sortMode === 'creation' ? 'Creation' : 'Duration';
+        const labels = { creation: 'Creation', duration: 'Duration', manual: 'Manual' };
+        toggleValue.textContent = labels[this.sortMode] || 'Creation';
     }
     
     toggleRoundDuration() {
@@ -1721,13 +1774,29 @@ class TodayTodo {
                 taskContent.appendChild(durationWrapper);
             }
             
+            // Add drag handle in manual sort mode
+            if (this.sortMode === 'manual') {
+                const handle = document.createElement('div');
+                handle.className = 'drag-handle';
+                handle.setAttribute('aria-label', 'Drag to reorder');
+                handle.innerHTML = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="2" cy="2" r="1.5"/>
+                    <circle cx="8" cy="2" r="1.5"/>
+                    <circle cx="2" cy="8" r="1.5"/>
+                    <circle cx="8" cy="8" r="1.5"/>
+                    <circle cx="2" cy="14" r="1.5"/>
+                    <circle cx="8" cy="14" r="1.5"/>
+                </svg>`;
+                taskContent.appendChild(handle);
+            }
+
             // Add task content to the list item
             li.appendChild(taskContent);
-            
+
             // Single click listener for task editing - works for all cases
             li.addEventListener('click', (e) => {
-                // Don't trigger if clicking on checkbox
-                if (!e.target.classList.contains('task-checkbox')) {
+                // Don't trigger if clicking on checkbox or drag handle
+                if (!e.target.classList.contains('task-checkbox') && !e.target.closest('.drag-handle')) {
                     this.editTask(task.id);
                 }
             });
@@ -1737,13 +1806,148 @@ class TodayTodo {
                 li.style.cursor = 'pointer';
             }
             
-            // Add swipe handlers
+            // Add swipe handlers (swipe-to-delete) and drag handlers (manual sort)
             this.addSwipeHandlers(li, task.id);
+            if (this.sortMode === 'manual') {
+                this.addDragHandlers(li, task.id);
+            }
             
             taskList.appendChild(li);
         });
     }
     
+    addDragHandlers(li, taskId) {
+        const clearDropClasses = () => {
+            document.querySelectorAll('.task-item.drag-over-top, .task-item.drag-over-bottom')
+                .forEach(el => el.classList.remove('drag-over-top', 'drag-over-bottom'));
+        };
+
+        const getPosition = (targetEl, clientY) => {
+            const rect = targetEl.getBoundingClientRect();
+            return clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+        };
+
+        // Desktop HTML5 drag API
+        li.setAttribute('draggable', 'true');
+
+        li.addEventListener('dragstart', (e) => {
+            this.draggedTaskId = taskId;
+            e.dataTransfer.effectAllowed = 'move';
+            requestAnimationFrame(() => li.classList.add('dragging'));
+        });
+
+        li.addEventListener('dragend', () => {
+            li.classList.remove('dragging');
+            clearDropClasses();
+            this.draggedTaskId = null;
+        });
+
+        li.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (this.draggedTaskId === taskId) return;
+            clearDropClasses();
+            const pos = getPosition(li, e.clientY);
+            li.classList.add(pos === 'before' ? 'drag-over-top' : 'drag-over-bottom');
+        });
+
+        li.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const insertBefore = li.classList.contains('drag-over-top');
+            clearDropClasses();
+            if (this.draggedTaskId !== null && this.draggedTaskId !== taskId) {
+                this.reorderTask(this.draggedTaskId, taskId, insertBefore ? 'before' : 'after');
+            }
+        });
+
+        // Mobile touch drag via the grip handle
+        const handle = li.querySelector('.drag-handle');
+        if (!handle) return;
+
+        handle.addEventListener('click', (e) => e.stopPropagation());
+
+        let touchDragging = false;
+        let lastDropTarget = null;
+        let lastDropPosition = 'before';
+
+        handle.addEventListener('touchstart', (e) => {
+            e.stopPropagation(); // prevent swipe-to-delete from activating
+            touchDragging = true;
+            this.draggedTaskId = taskId;
+            li.classList.add('dragging');
+        }, { passive: true });
+
+        handle.addEventListener('touchmove', (e) => {
+            if (!touchDragging) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetLi = el ? el.closest('.task-item') : null;
+
+            if (lastDropTarget) {
+                lastDropTarget.classList.remove('drag-over-top', 'drag-over-bottom');
+            }
+
+            if (targetLi && targetLi !== li) {
+                lastDropPosition = getPosition(targetLi, touch.clientY);
+                targetLi.classList.add(lastDropPosition === 'before' ? 'drag-over-top' : 'drag-over-bottom');
+                lastDropTarget = targetLi;
+            } else if (!targetLi || targetLi === li) {
+                // Finger is outside all task items — snap to first or last
+                const items = [...document.querySelectorAll('#taskList .task-item:not(.dragging)')];
+                if (items.length > 0) {
+                    const first = items[0];
+                    const last = items[items.length - 1];
+                    if (touch.clientY <= first.getBoundingClientRect().top) {
+                        first.classList.add('drag-over-top');
+                        lastDropTarget = first;
+                        lastDropPosition = 'before';
+                    } else {
+                        last.classList.add('drag-over-bottom');
+                        lastDropTarget = last;
+                        lastDropPosition = 'after';
+                    }
+                } else {
+                    lastDropTarget = null;
+                }
+            }
+        }, { passive: false });
+
+        const finishTouchDrag = () => {
+            if (!touchDragging) return;
+            touchDragging = false;
+            li.classList.remove('dragging');
+
+            if (lastDropTarget) {
+                lastDropTarget.classList.remove('drag-over-top', 'drag-over-bottom');
+                const targetId = parseInt(lastDropTarget.dataset.taskId);
+                if (targetId && targetId !== taskId) {
+                    this.reorderTask(taskId, targetId, lastDropPosition);
+                }
+            }
+
+            clearDropClasses();
+            this.draggedTaskId = null;
+            lastDropTarget = null;
+            lastDropPosition = 'before';
+        };
+
+        handle.addEventListener('touchend', finishTouchDrag);
+        handle.addEventListener('touchcancel', finishTouchDrag);
+    }
+
+    reorderTask(fromId, toId, position = 'before') {
+        const fromIndex = this.tasks.findIndex(t => t.id === fromId);
+        const toIndex = this.tasks.findIndex(t => t.id === toId);
+        if (fromIndex === -1 || toIndex === -1) return;
+        const [task] = this.tasks.splice(fromIndex, 1);
+        // recalculate toIndex after splice since array shifted
+        const newToIndex = this.tasks.findIndex(t => t.id === toId);
+        this.tasks.splice(position === 'before' ? newToIndex : newToIndex + 1, 0, task);
+        this.saveData();
+        this.renderTasks();
+    }
+
     openTimer(taskId) {
         const task = this.tasks.find(t => t.id === taskId);
         if (!task || !task.duration || task.duration <= 0) return;

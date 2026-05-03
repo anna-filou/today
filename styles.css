@@ -1570,3 +1570,44 @@ input, textarea {
     cursor: pointer;
     flex-shrink: 0;
 }
+
+.drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0 8px 12px;
+    margin: -8px -4px -8px 0;
+    cursor: grab;
+    color: #555;
+    flex-shrink: 0;
+    touch-action: none;
+    -webkit-touch-callout: none;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+    color: #888;
+}
+
+.task-item.dragging {
+    opacity: 0.4;
+}
+
+.task-item.drag-over-top::before,
+.task-item.drag-over-bottom::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: 10;
+}
+
+.task-item.drag-over-top::before {
+    top: 0;
+}
+
+.task-item.drag-over-bottom::after {
+    bottom: 0;
+}
