@@ -762,34 +762,91 @@ class TodayTodo {
     
     toggleTask(id) {
         const task = this.tasks.find(t => t.id === id);
-        if (task) {
-            const wasBeingCheckedOff = !task.completed;
-            task.completed = !task.completed;
-            
-            this.saveData();
-            this.updateUI();
-            
-            // Add animation class if task is being checked off (after UI update)
-            if (wasBeingCheckedOff) {
+        if (!task) return;
+
+        const wasBeingCheckedOff = !task.completed;
+        task.completed = !task.completed;
+        this.saveData();
+
+        // In duration sort, hold the task in place during the checkbox animation,
+        // then FLIP-animate it to its sorted position.
+        if (wasBeingCheckedOff && this.sortMode === 'duration') {
+            this.updateRemainingTime();
+            this.updateDayProgress();
+
+            // Visually mark as completed without resorting
+            const el = document.querySelector(`[data-task-id="${id}"]`);
+            if (el) {
+                const checkbox = el.querySelector('.task-checkbox');
+                el.classList.add('animate');
+                checkbox?.classList.add('checked', 'animate');
+                el.querySelector('.task-text')?.classList.add('completed');
+                el.querySelector('.task-duration')?.classList.add('completed');
                 setTimeout(() => {
-                    const taskElement = document.querySelector(`[data-task-id="${id}"]`);
-                    if (taskElement) {
-                        const checkbox = taskElement.querySelector('.task-checkbox');
-                        if (checkbox) {
-                            // Add animate class to both task item and checkbox
-                            taskElement.classList.add('animate');
-                            checkbox.classList.add('animate');
-                            
-                            // Remove animation classes after animation completes
-                            setTimeout(() => {
-                                taskElement.classList.remove('animate');
-                                checkbox.classList.remove('animate');
-                            }, 400);
-                        }
-                    }
-                }, 0);
+                    el.classList.remove('animate');
+                    checkbox?.classList.remove('animate');
+                }, 400);
             }
+
+            // After checkbox animation, animate the reorder
+            setTimeout(() => this.reorderWithAnimation(), 400);
+            return;
         }
+
+        if (!wasBeingCheckedOff && this.sortMode === 'duration') {
+            this.updateRemainingTime();
+            this.updateDayProgress();
+            this.reorderWithAnimation();
+            return;
+        }
+
+        this.updateUI();
+
+        if (wasBeingCheckedOff) {
+            setTimeout(() => {
+                const taskElement = document.querySelector(`[data-task-id="${id}"]`);
+                if (taskElement) {
+                    const checkbox = taskElement.querySelector('.task-checkbox');
+                    if (checkbox) {
+                        taskElement.classList.add('animate');
+                        checkbox.classList.add('animate');
+                        setTimeout(() => {
+                            taskElement.classList.remove('animate');
+                            checkbox.classList.remove('animate');
+                        }, 400);
+                    }
+                }
+            }, 0);
+        }
+    }
+
+    reorderWithAnimation() {
+        const taskList = document.getElementById('taskList');
+        const before = {};
+        taskList.querySelectorAll('.task-item').forEach(el => {
+            before[el.dataset.taskId] = el.getBoundingClientRect().top;
+        });
+
+        this.renderTasks();
+        this.updateEmptyState();
+
+        requestAnimationFrame(() => {
+            taskList.querySelectorAll('.task-item').forEach(el => {
+                const delta = (before[el.dataset.taskId] ?? el.getBoundingClientRect().top)
+                    - el.getBoundingClientRect().top;
+                if (!delta) return;
+                el.style.transition = 'none';
+                el.style.transform = `translateY(${delta}px)`;
+            });
+            requestAnimationFrame(() => {
+                taskList.querySelectorAll('.task-item').forEach(el => {
+                    if (!el.style.transform) return;
+                    el.style.transition = 'transform 0.5s ease';
+                    el.style.transform = '';
+                    el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
+                });
+            });
+        });
     }
     
     editTask(id) {
