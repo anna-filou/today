@@ -1672,6 +1672,7 @@ class TodayTodo {
         document.getElementById('timerTaskName').textContent = task.text || '';
 
         document.getElementById('timerOverlay').classList.add('show');
+        this.playTimer();
     }
 
     closeTimer() {
@@ -1807,12 +1808,13 @@ class TodayTodo {
             return;
         }
 
-        // Show overlay paused at the correct remaining time
+        // Show overlay and resume counting
         this.drawTimerTicks();
         this.updateTimerDisplay();
         this.updateTimerPlayBtn();
         document.getElementById('timerTaskName').textContent = task.text || '';
         document.getElementById('timerOverlay').classList.add('show');
+        this.playTimer();
     }
 
     drawTimerTicks() {
