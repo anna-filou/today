@@ -880,6 +880,54 @@ input, textarea {
     max-height: calc(90vh - 80px); /* Account for modal header */
 }
 
+/* Timer Modal */
+.timer-modal-content {
+    max-width: 320px;
+    width: 100%;
+}
+
+.timer-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px 48px;
+    gap: 40px;
+}
+
+.timer-display {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 72px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -2px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 24px;
+}
+
+.timer-btn {
+    background: #333;
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.timer-btn:hover {
+    background: #444;
+}
+
 /* Add Task Overlay */
 .add-task-overlay {
     position: absolute;

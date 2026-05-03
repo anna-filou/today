@@ -16,7 +16,12 @@ class TodayTodo {
         this.selectedDuration = null; // Track selected duration from pills (in minutes)
         this.deletedTask = null; // Store deleted task for undo
         this.undoTimeout = null; // Timer for clearing deleted task
-        
+        this.timerTaskId = null;
+        this.timerSecondsLeft = 0;
+        this.timerTotalSeconds = 0;
+        this.timerInterval = null;
+        this.timerRunning = false;
+
         this.init();
     }
     
@@ -471,6 +476,13 @@ class TodayTodo {
         // Initialize time picker
         this.initializeTimePicker();
         
+        // Timer modal controls
+        document.getElementById('timerClose').addEventListener('click', () => this.closeTimerModal());
+        document.getElementById('timerPlayPause').addEventListener('click', () => {
+            if (this.timerRunning) this.pauseTimer(); else this.startTimer();
+        });
+        document.getElementById('timerReset').addEventListener('click', () => this.resetTimer());
+
         // Close modals when clicking outside (except newDayModal - it's mandatory)
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
@@ -478,9 +490,13 @@ class TodayTodo {
                 if (modal.id === 'newDayModal') {
                     return;
                 }
-                
+
                 if (e.target === modal) {
-                    modal.classList.remove('show');
+                    if (modal.id === 'timerModal') {
+                        this.closeTimerModal();
+                    } else {
+                        modal.classList.remove('show');
+                    }
                 }
             });
         });
@@ -695,6 +711,60 @@ class TodayTodo {
     }
     
     
+    openTimerModal(task) {
+        this.timerTaskId = task.id;
+        this.timerTotalSeconds = task.duration * 60;
+        this.timerSecondsLeft = this.timerTotalSeconds;
+        document.getElementById('timerTaskName').textContent = task.text || '';
+        this.updateTimerDisplay();
+        document.getElementById('timerModal').classList.add('show');
+        this.startTimer();
+    }
+
+    startTimer() {
+        if (this.timerRunning) return;
+        this.timerRunning = true;
+        document.getElementById('timerPlayPause').textContent = '⏸';
+        this.timerInterval = setInterval(() => {
+            if (this.timerSecondsLeft <= 0) {
+                clearInterval(this.timerInterval);
+                this.timerRunning = false;
+                document.getElementById('timerPlayPause').textContent = '▶';
+                return;
+            }
+            this.timerSecondsLeft--;
+            this.updateTimerDisplay();
+        }, 1000);
+    }
+
+    pauseTimer() {
+        clearInterval(this.timerInterval);
+        this.timerRunning = false;
+        document.getElementById('timerPlayPause').textContent = '▶';
+    }
+
+    resetTimer() {
+        clearInterval(this.timerInterval);
+        this.timerRunning = false;
+        this.timerSecondsLeft = this.timerTotalSeconds;
+        this.updateTimerDisplay();
+        document.getElementById('timerPlayPause').textContent = '▶';
+    }
+
+    updateTimerDisplay() {
+        const m = Math.floor(this.timerSecondsLeft / 60);
+        const s = this.timerSecondsLeft % 60;
+        document.getElementById('timerDisplay').textContent =
+            `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    closeTimerModal() {
+        clearInterval(this.timerInterval);
+        this.timerRunning = false;
+        this.timerInterval = null;
+        document.getElementById('timerModal').classList.remove('show');
+    }
+
     deleteTask(id) {
         // Store deleted task for undo
         this.deletedTask = this.tasks.find(t => t.id === id);
@@ -1580,23 +1650,28 @@ class TodayTodo {
             if (task.duration && task.duration > 0) {
                 durationSpan = document.createElement('span');
                 durationSpan.className = `task-duration ${task.completed ? 'completed' : ''}`;
-            durationSpan.textContent = this.formatDuration(task.duration);
+                durationSpan.textContent = this.formatDuration(task.duration);
+                durationSpan.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openTimerModal(task);
+                });
             }
-            
+
             // Add elements to task content
             taskContent.appendChild(checkbox);
             taskContent.appendChild(textSpan);
             if (durationSpan) {
                 taskContent.appendChild(durationSpan);
             }
-            
+
             // Add task content to the list item
             li.appendChild(taskContent);
-            
+
             // Single click listener for task editing - works for all cases
             li.addEventListener('click', (e) => {
-                // Don't trigger if clicking on checkbox
-                if (!e.target.classList.contains('task-checkbox')) {
+                // Don't trigger if clicking on checkbox or duration badge
+                if (!e.target.classList.contains('task-checkbox') &&
+                    !e.target.classList.contains('task-duration')) {
                     this.editTask(task.id);
                 }
             });
