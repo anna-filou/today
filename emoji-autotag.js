@@ -38,8 +38,13 @@ const EMOJI_WORD_BANK = [
     
     // Health & Fitness
     { word: 'gym', emoji: '🏋️' },
+    { word: 'lift weights', emoji: '🏋️' },
+    { word: 'weightlifting', emoji: '🏋️' },
+    { word: 'weight lifting', emoji: '🏋️' },
     { word: 'workout', emoji: '💪' },
     { word: 'exercise', emoji: '💪' },
+    { word: 'pull ups', emoji: '💪' },
+    { word: 'push ups', emoji: '💪' },
     { word: 'run', emoji: '🏃' },
     { word: 'walk', emoji: '🚶' },
     { word: 'yoga', emoji: '🧘' },
@@ -113,6 +118,8 @@ const EMOJI_WORD_BANK = [
     { word: 'print', emoji: '🖨️' },
     { word: 'video', emoji: '🎬' },
     { word: 'music', emoji: '🎵' },
+    { word: 'song', emoji: '🎵' },
+    { word: 'songs', emoji: '🎵' },
     { word: 'movie', emoji: '🍿' },
     { word: 'cinema', emoji: '🍿' },
     { word: 'series', emoji: '🍿' },
@@ -135,6 +142,7 @@ const EMOJI_WORD_BANK = [
     { word: 'download', emoji: '⬇️' },
     { word: 'update', emoji: '🔄' },
     { word: 'files', emoji: '📁' },
+    { word: 'YouTube', emoji: '▶️' },
     { word: 'Notion', emoji: '📓' },
     
     // Planning & Notes
