@@ -51,6 +51,13 @@ const EMOJI_WORD_BANK = [
     { word: 'stretch', emoji: '🧘' },
     { word: 'doctor', emoji: '🩺' },
     { word: 'dentist', emoji: '🦷' },
+    { word: 'pharmacy', emoji: '🏥' },
+    { word: 'hospital', emoji: '🏥' },
+    { word: 'Pill', emoji: '💊' },
+    { word: 'pills', emoji: '💊' },
+    { word: 'medicine', emoji: '💊' },
+    { word: 'meds', emoji: '💊' },
+    { word: 'medication', emoji: '💊' },
     { word: 'meditate', emoji: '🧘' },
     
     // Food & Drink
@@ -116,7 +123,8 @@ const EMOJI_WORD_BANK = [
     { word: 'photo', emoji: '📷' },
     { word: 'scan', emoji: '📸' },
     { word: 'print', emoji: '🖨️' },
-    { word: 'video', emoji: '🎬' },
+    { word: 'Loom', emoji: '🎦' },
+    { word: 'video', emoji: '🎦' },
     { word: 'music', emoji: '🎵' },
     { word: 'song', emoji: '🎵' },
     { word: 'songs', emoji: '🎵' },
@@ -164,6 +172,7 @@ const EMOJI_WORD_BANK = [
     
     // Shopping & Delivery (additional)
     { word: 'package', emoji: '📦' },
+    { word: 'Box', emoji: '📦' },
     { word: 'invoice', emoji: '🧾' },
     { word: 'check out', emoji: '👉' },
     { word: 'try', emoji: '👉' },
