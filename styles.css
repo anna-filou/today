@@ -1411,6 +1411,12 @@ input, textarea {
     overflow-y: auto;
 }
 
+@media (max-height: 600px) {
+    .timer-overlay {
+        padding-top: max(20px, env(safe-area-inset-top));
+    }
+}
+
 .timer-overlay.show {
     display: flex;
 }
