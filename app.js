@@ -2024,7 +2024,6 @@ class TodayTodo {
         if (this.timerIsPlaying) this.pauseTimer();
         this.timerRemainingSeconds = this.timerOriginalSeconds;
         this.updateTimerDisplay();
-        this.playTimer();
     }
 
     playTimer() {
