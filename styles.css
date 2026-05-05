@@ -1406,7 +1406,9 @@ input, textarea {
     z-index: 2000;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: max(80px, calc(60px + env(safe-area-inset-top)));
+    overflow-y: auto;
 }
 
 .timer-overlay.show {
@@ -1443,6 +1445,7 @@ input, textarea {
     flex-direction: column;
     align-items: center;
     gap: 36px;
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
 }
 
 .timer-clock-area {
@@ -1560,6 +1563,59 @@ input, textarea {
     font-weight: 400;
     color: #888;
     font-variant-numeric: tabular-nums lining-nums;
+}
+
+.timer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(65vw, 280px);
+    margin-top: 8px;
+}
+
+.timer-action-btn {
+    width: 100%;
+    padding: 14px 0;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+    color: #000;
+}
+
+.timer-action-btn--secondary {
+    background: transparent;
+    color: #fff;
+    border: 1.5px solid #333;
+}
+
+.btn-label-short {
+    display: none;
+}
+
+@media (max-height: 600px) {
+    .timer-overlay {
+        padding-top: max(20px, env(safe-area-inset-top));
+    }
+
+    .timer-content {
+        gap: 0;
+    }
+
+    .timer-actions {
+        flex-direction: row;
+    }
+
+    .btn-label-full {
+        display: none;
+    }
+
+    .btn-label-short {
+        display: inline;
+    }
 }
 
 .task-duration-tap-area {
