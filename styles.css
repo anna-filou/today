@@ -1406,7 +1406,9 @@ input, textarea {
     z-index: 2000;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: max(80px, calc(60px + env(safe-area-inset-top)));
+    overflow-y: auto;
 }
 
 .timer-overlay.show {
@@ -1443,6 +1445,7 @@ input, textarea {
     flex-direction: column;
     align-items: center;
     gap: 36px;
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
 }
 
 .timer-clock-area {
