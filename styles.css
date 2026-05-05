@@ -1415,6 +1415,18 @@ input, textarea {
     .timer-overlay {
         padding-top: max(20px, env(safe-area-inset-top));
     }
+
+    .timer-actions {
+        flex-direction: row;
+    }
+
+    .btn-label-full {
+        display: none;
+    }
+
+    .btn-label-short {
+        display: inline;
+    }
 }
 
 .timer-overlay.show {
@@ -1594,8 +1606,12 @@ input, textarea {
 
 .timer-action-btn--secondary {
     background: transparent;
-    color: #888;
+    color: #fff;
     border: 1.5px solid #333;
+}
+
+.btn-label-short {
+    display: none;
 }
 
 .task-duration-tap-area {
