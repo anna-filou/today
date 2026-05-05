@@ -1411,24 +1411,6 @@ input, textarea {
     overflow-y: auto;
 }
 
-@media (max-height: 600px) {
-    .timer-overlay {
-        padding-top: max(20px, env(safe-area-inset-top));
-    }
-
-    .timer-actions {
-        flex-direction: row;
-    }
-
-    .btn-label-full {
-        display: none;
-    }
-
-    .btn-label-short {
-        display: inline;
-    }
-}
-
 .timer-overlay.show {
     display: flex;
 }
@@ -1612,6 +1594,24 @@ input, textarea {
 
 .btn-label-short {
     display: none;
+}
+
+@media (max-height: 600px) {
+    .timer-overlay {
+        padding-top: max(20px, env(safe-area-inset-top));
+    }
+
+    .timer-actions {
+        flex-direction: row;
+    }
+
+    .btn-label-full {
+        display: none;
+    }
+
+    .btn-label-short {
+        display: inline;
+    }
 }
 
 .task-duration-tap-area {
