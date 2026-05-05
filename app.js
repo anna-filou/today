@@ -568,6 +568,16 @@ class TodayTodo {
             e.preventDefault();
             this.toggleTimer();
         }, { passive: false });
+        document.getElementById('timerMarkDoneBtn').addEventListener('click', () => this.timerMarkDone());
+        document.getElementById('timerMarkDoneBtn').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.timerMarkDone();
+        }, { passive: false });
+        document.getElementById('timerResetBtn').addEventListener('click', () => this.timerReset());
+        document.getElementById('timerResetBtn').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.timerReset();
+        }, { passive: false });
 
         // Reconcile timer when tab becomes visible again (e.g. returning from another app)
         document.addEventListener('visibilitychange', () => {
@@ -1999,6 +2009,22 @@ class TodayTodo {
         document.getElementById('timerOverlay').classList.remove('show');
         this.timerTaskId = null;
         this.timerPlayStartAt = null;
+    }
+
+    timerMarkDone() {
+        const id = this.timerTaskId;
+        this.closeTimer();
+        if (id !== null) {
+            const task = this.tasks.find(t => t.id === id);
+            if (task && !task.completed) this.toggleTask(id);
+        }
+    }
+
+    timerReset() {
+        if (this.timerIsPlaying) this.pauseTimer();
+        this.timerRemainingSeconds = this.timerOriginalSeconds;
+        this.updateTimerDisplay();
+        this.playTimer();
     }
 
     playTimer() {

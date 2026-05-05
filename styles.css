@@ -1562,6 +1562,33 @@ input, textarea {
     font-variant-numeric: tabular-nums lining-nums;
 }
 
+.timer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(65vw, 280px);
+    margin-top: 8px;
+}
+
+.timer-action-btn {
+    width: 100%;
+    padding: 14px 0;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+    color: #000;
+}
+
+.timer-action-btn--secondary {
+    background: transparent;
+    color: #888;
+    border: 1.5px solid #333;
+}
+
 .task-duration-tap-area {
     display: flex;
     align-items: center;
