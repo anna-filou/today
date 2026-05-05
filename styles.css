@@ -1601,6 +1601,10 @@ input, textarea {
         padding-top: max(20px, env(safe-area-inset-top));
     }
 
+    .timer-content {
+        gap: 0;
+    }
+
     .timer-actions {
         flex-direction: row;
     }
